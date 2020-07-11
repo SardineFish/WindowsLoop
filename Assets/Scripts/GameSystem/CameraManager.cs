@@ -13,6 +13,9 @@ public class CameraManager : Singleton<CameraManager>
     [SerializeField]
     private CinemachineVirtualCamera m_VirtualCamera;
 
+    [SerializeField]
+    private PlayerTracker m_PlayerTracker;
+
     public RectInt outterViewRect
     {
         get
@@ -59,6 +62,7 @@ public class CameraManager : Singleton<CameraManager>
 
     private void Awake()
     {
+        
     }
 
     // Use this for initialization
@@ -95,11 +99,11 @@ public class CameraManager : Singleton<CameraManager>
 
     public void StopMotion()
     {
-        m_VirtualCamera.Follow = null;
+        m_PlayerTracker.EnableTrack = false;
     }
 
     public void StartMotion()
     {
-        m_VirtualCamera.Follow = GameSystem.Instance.Player.transform;
+        m_PlayerTracker.EnableTrack = true;
     }
 }

@@ -23,6 +23,12 @@ public static class MathUtility
     {
         return new Vector3(v.x, 0, v.y);
     }
+
+    public static float Frac(float x)
+        => x - Mathf.Floor(x);
+
+    public static Vector2 Frac(Vector2 v)
+        => new Vector2(Frac(v.x), Frac(v.y));
     public static Vector3 ClipY(this Vector3 v)
     {
         return Vector3.Scale(v, new Vector3(1, 0, 1));
@@ -66,7 +72,7 @@ public static class MathUtility
     }
 
     public static Vector2 Floor(Vector2 v)
-        => new Vector2(Mathf.Floor(v.y), Mathf.Floor(v.y));
+        => new Vector2(Mathf.Floor(v.x), Mathf.Floor(v.y));
     public static Vector2Int FloorToInt(Vector2 v)
         => new Vector2Int(Mathf.FloorToInt(v.x), Mathf.FloorToInt(v.y));
 

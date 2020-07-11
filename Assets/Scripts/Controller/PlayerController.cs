@@ -57,6 +57,7 @@ public class PlayerController : MonoBehaviour
     {
         collider = GetComponent<BoxCollider2D>();
         rigidbody = GetComponent<Rigidbody2D>();
+        
     }
     private void OnEnable()
     {
@@ -71,7 +72,6 @@ public class PlayerController : MonoBehaviour
     // Use this for initialization
     void Start()
     {
-
     }
 
     private void OnCollisionStay2D(Collision2D collision)
@@ -139,6 +139,11 @@ public class PlayerController : MonoBehaviour
         jumpCache.Update(Time.time);
         onGroundCache.CacheTime = m_CoyoteTime;
         onGroundCache.Update(Time.time);
+    }
+
+    private void LateUpdate()
+    {
+        
     }
 
     public void Jump()
