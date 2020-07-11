@@ -685,6 +685,8 @@ MonoBehaviour:
   m_JumpHeight: 2.5
   m_JumpTime: 0.35
   m_FallGravityScale: 1.8
+  m_JumpCacheTime: 0.06
+  m_CoyoteTime: 0.1
 --- !u!61 &1865001330
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -1911,7 +1913,7 @@ Tilemap:
       m_TileMatrixIndex: 0
       m_TileColorIndex: 0
       m_TileObjectToInstantiateIndex: 65535
-      m_AllTileFlags: 2147483649
+      m_AllTileFlags: 1
   - first: {x: 9, y: 4, z: 0}
     second:
       serializedVersion: 2
@@ -2064,7 +2066,7 @@ Tilemap:
       m_TileMatrixIndex: 0
       m_TileColorIndex: 0
       m_TileObjectToInstantiateIndex: 65535
-      m_AllTileFlags: 2147483649
+      m_AllTileFlags: 1
   - first: {x: 9, y: 5, z: 0}
     second:
       serializedVersion: 2
@@ -2615,18 +2617,10 @@ CompositeCollider2D:
         Y: 70000000
       - X: 80000000
         Y: 60000100
-      - X: 79999959
-        Y: 60000100
-      - X: 79999900
-        Y: 60000041
-      - X: 79999900
-        Y: 39999959
-      - X: 79999959
-        Y: 39999900
       - X: 90000041
-        Y: 39999900
+        Y: 60000100
       - X: 90000100
-        Y: 39999959
+        Y: 60000041
       - X: 90000100
         Y: 40000000
       - X: 100000000
@@ -2842,7 +2836,9 @@ CompositeCollider2D:
     - - {x: 11.99997, y: 2.00001}
       - {x: 11.99997, y: 7}
       - {x: 8, y: 6.9999704}
-      - {x: 8.000026, y: 3.99999}
+      - {x: 8.00003, y: 6.00001}
+      - {x: 9.00001, y: 5.9999747}
+      - {x: 9.000039, y: 4}
       - {x: 10, y: 3.9999704}
       - {x: 10.00003, y: 3}
       - {x: 11, y: 2.9999707}

@@ -23,6 +23,12 @@ public class PlayerController : MonoBehaviour
     [SerializeField]
     private float m_FallGravityScale = 1;
 
+    [SerializeField]
+    private float m_JumpCacheTime = 0.2f;
+
+    [SerializeField]
+    private float m_CoyoteTime = 0.1f;
+
 
     float gravity
     {
@@ -44,6 +50,8 @@ public class PlayerController : MonoBehaviour
     bool onGround = false;
     new BoxCollider2D collider;
     new Rigidbody2D rigidbody;
+    StateCache jumpCache = new StateCache(0.2f);
+    StateCache onGroundCache = new StateCache(0.1f);
 
     private void Awake()
     {
@@ -68,19 +76,15 @@ public class PlayerController : MonoBehaviour
 
     private void OnCollisionStay2D(Collision2D collision)
     {
-        var footheight = (collider.transform.position.ToVector2() + collider.offset - collider.size / 2).y - collider.edgeRadius;
-        foreach (var contact in collision.contacts)
-        {
-            if (contact.normal.y > 0.5f && Mathf.Abs(contact.point.y - footheight) < 0.1f)
-            {
-                onGround = true;
-            }
-            Debug.DrawLine(contact.point, contact.point + contact.normal, Color.red);
-
-        }
+        OnCollision2D(collision);
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
+    {
+        OnCollision2D(collision);
+    }
+
+    void OnCollision2D(Collision2D collision)
     {
         var footheight = (collider.transform.position.ToVector2() + collider.offset - collider.size / 2).y - collider.edgeRadius;
         foreach (var contact in collision.contacts)
@@ -88,6 +92,7 @@ public class PlayerController : MonoBehaviour
             if (contact.normal.y > 0.5f && Mathf.Abs(contact.point.y - footheight) < 0.1f)
             {
                 onGround = true;
+                onGroundCache.Renew(Time.time);
             }
             if (Mathf.Abs(contact.normal.y) > 0.5f)
                 velocity.y = 0;
@@ -111,7 +116,9 @@ public class PlayerController : MonoBehaviour
             if (RawKeyInput.IsKeyDown(RawKey.S))
                 movement += Vector2.down;
             if (RawKeyInput.IsKeyDown(RawKey.Space))
-                Jump();
+            {
+                jumpCache.Renew(Time.time);
+            }
                
         }
         else
@@ -125,19 +132,27 @@ public class PlayerController : MonoBehaviour
             if (Input.GetKey(KeyCode.S))
                 movement += Vector2.down;
             if (Input.GetKey(KeyCode.Space))
-                Jump();
+                jumpCache.Renew(Time.time);
         }
         rawMovementInput = movement;
+        jumpCache.CacheTime = m_JumpCacheTime;
+        jumpCache.Update(Time.time);
+        onGroundCache.CacheTime = m_CoyoteTime;
+        onGroundCache.Update(Time.time);
     }
 
     public void Jump()
     {
-        if (onGround)
+        if (onGroundCache)
             velocity.y = jumpVelocity;
         onGround = false;
+        onGroundCache.Clear();
     }
     private void FixedUpdate()
     {
+        if (jumpCache.Value)
+            Jump();
+
         onGround = false;
 
         velocity = new Vector2(
