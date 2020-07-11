@@ -32,7 +32,7 @@ namespace LibTest
 
         static SharedMemory()
         {
-            
+
         }
 
         internal static void Init()
@@ -41,7 +41,12 @@ namespace LibTest
         }
 
         public static MemoryMappedViewAccessor GetPage(int index) =>
-            mmf.CreateViewAccessor(index * PageSize, PageSize);
+            index >= 0 && index < PageCount ? mmf.CreateViewAccessor(index * PageSize, PageSize) : null;
+
+        public static MemoryMappedViewAccessor GetPageByPID(int pid) =>
+            Array.IndexOf(pageTable, pid) is var index && index >= 0
+            ? GetPage(index)
+            : null;
 
         static int AllocatePage()
         {

@@ -8,26 +8,27 @@ using static LibTest.Native;
 
 namespace LibTest
 {
-    public class Foo
+    public static class Foo
     {
         const int SnapThreshold = 40;
         const int ClientWidth = 600;
         const int ClientHeight = 400;
-        const int SnapRectWidth = ClientWidth - TileSize;
-        const int SnapRectHeight = ClientHeight - TileSize;
+        const int SnapRectWidth = ClientWidth;
+        const int SnapRectHeight = ClientHeight;
         const int TileSize = 40;
         const string UnityWindowClassName = "UnityWndClass";
-        static readonly int WindowWidth;
-        static readonly int WindowHeight;
-        static readonly int ClientOffsetX;
-        static readonly int ClientOffsetY;
-        static readonly int PID;
+        public static readonly int WindowWidth;
+        public static readonly int WindowHeight;
+        public static readonly int ClientOffsetX;
+        public static readonly int ClientOffsetY;
+        public static readonly int PID;
+        public static bool SnapWhileMoving { get; set; } = false;
         static readonly IntPtr originalWndProcPtr;
         static readonly WndProc wndProcDelegate;
         static IntPtr hWnd;
         static RECT clientSnapRect;
         //static RECT screenSnapRect;
-        static Action<int, Vec2> Snaped; // (pid, position)
+        static Action<int, Vec2> Attached; // (pid, position)
         internal static Action<string> Log;
         static int dragOffsetX;
         static int dragOffsetY;
@@ -57,7 +58,7 @@ namespace LibTest
             originalWndProcPtr = SetWindowLongPtr(hWnd, -4, Marshal.GetFunctionPointerForDelegate(wndProcDelegate));
         }
 
-        static void Init()
+        public static void Init()
         {
             SharedMemory.Init();
             SharedMemory.Self.Write(Address.PID, PID);
@@ -82,12 +83,12 @@ namespace LibTest
                 Bottom = (int)Math.Round(clientSnapRect.Max.Y),
             };
             Foo.clientSnapRect = new RECT
-{
-    Left = 20,
-    Top = 20,
-    Right = 580,
-    Bottom = 380,
-};
+            {
+                Left = 0,
+                Top = 0,
+                Right = 600,
+                Bottom = 400,
+            };
             UpdateScreenSnapRect();
         }
         static void Snap()
@@ -135,6 +136,10 @@ namespace LibTest
                     break;
                 }
             case WM.MOVING:
+                if (SnapWhileMoving)
+                    goto case WM.EXITSIZEMOVE;
+                break;
+            case WM.EXITSIZEMOVE:
                 {
                     GetCursorPos(out var cursor);
                     var windowRect = new RECT
@@ -147,9 +152,10 @@ namespace LibTest
                     var screenSnapRect = windowRect
                         .Translate(ClientOffsetX, ClientOffsetY)
                         .Translate(clientSnapRect.Left, clientSnapRect.Top);
-                    
+
                     var snaped = false;
                     var targetScreenSnapRect = new RECT();
+                    var attachedWindowPID = 0;
                     foreach (var page in otherPages)
                     {
                         targetScreenSnapRect = new RECT
@@ -182,6 +188,7 @@ namespace LibTest
                         else
                             continue;
                         snaped = true;
+                        attachedWindowPID = page.ReadInt32(Address.PID);
                         break;
                     }
                     if (snaped)
@@ -197,10 +204,39 @@ namespace LibTest
                             .Translate(-ClientOffsetX, -ClientOffsetY)
                             .Translate(-clientSnapRect.Left, -clientSnapRect.Top);
                     }
-                    Marshal.StructureToPtr(windowRect, lParam, false);
-                    SharedMemory.Self.Write(Address.Snaped, snaped);
-                    SharedMemory.Self.Flush();
+                    if (msg == WM.MOVING)
+                    {
+                        Marshal.StructureToPtr(windowRect, lParam, false);
+                    }
+                    else if (snaped)
+                    {
+                        SetWindowPos(
+                            hWnd,
+                            (IntPtr)SpecialWindowHandles.HWND_TOP,
+                            windowRect.Left, windowRect.Top,
+                            windowRect.Width, windowRect.Height,
+                            SetWindowPosFlags.ShowWindow);
+                    }
                     UpdateScreenSnapRect();
+                    var lastAttachedWindowPage =
+                        SharedMemory.GetPageByPID(SharedMemory.Self.ReadInt32(Address.AttachedWindowPID));
+                    lastAttachedWindowPage.Write(Address.AttachedWindowPID, 0);
+                    lastAttachedWindowPage.Write(Address.AttachmentChanged, true);
+                    lastAttachedWindowPage.Flush();
+                    var attachedWindowPage = SharedMemory.GetPageByPID(attachedWindowPID);
+                    attachedWindowPage.Write(Address.AttachedWindowPID, PID);
+                    attachedWindowPage.Write(Address.AttachmentChanged, true);
+                    attachedWindowPage.Flush();
+                    SharedMemory.Self.Write(Address.AttachedWindowPID, attachedWindowPID);
+                    SharedMemory.Self.Flush();
+                    Log($"Attached({attachedWindowPID})");
+                    Attached(
+                        attachedWindowPID,
+                        attachedWindowPID == 0
+                        ? new Vec2()
+                        : new Vec2(
+                            targetScreenSnapRect.Left,
+                            targetScreenSnapRect.Top));
                     break;
                 }
             case WM.CLOSE:
@@ -212,7 +248,7 @@ namespace LibTest
 
         public static void SetSnapCallback(Action<int, Vec2> callback)
         {
-            Snaped = callback;
+            Attached = callback;
         }
         public static void SetLogCallback(Action<string> callback)
         {
@@ -221,7 +257,26 @@ namespace LibTest
         }
         public static void TickPerSecond()
         {
-            Log($"Screen Snap Rect: {GetScreenSnapRect().Left}, {GetScreenSnapRect().Top}");
+            //Log($"Screen Snap Rect: {GetScreenSnapRect().Left}, {GetScreenSnapRect().Top}");
+            TickPerFrame();
+        }
+        public static void TickPerFrame()
+        {
+            if (SharedMemory.Self.ReadBoolean(Address.AttachmentChanged))
+            {
+                SharedMemory.Self.Write(Address.AttachmentChanged, false);
+                SharedMemory.Self.Flush();
+                var attachedWindowPID = SharedMemory.Self.ReadInt32(Address.AttachedWindowPID);
+                var page = SharedMemory.GetPageByPID(attachedWindowPID);
+                Log($"Attached({attachedWindowPID})");
+                Attached(
+                    attachedWindowPID,
+                    attachedWindowPID == 0
+                    ? new Vec2()
+                    : new Vec2(
+                        page.ReadInt32(Address.ScreenSnapRectX),
+                        page.ReadInt32(Address.ScreenSnapRectY)));
+            }
         }
     }
 }

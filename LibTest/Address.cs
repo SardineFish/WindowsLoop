@@ -9,6 +9,7 @@ namespace LibTest
         public const int PID = 0;
         public const int ScreenSnapRectX = 4;
         public const int ScreenSnapRectY = 8;
-        public const int Snaped = 12;
+        public const int AttachedWindowPID = 12;
+        public const int AttachmentChanged = 16;
     }
 }
