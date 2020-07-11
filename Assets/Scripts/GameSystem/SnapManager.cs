@@ -6,10 +6,14 @@ public class SnapManager : Singleton<SnapManager>
 {
     private void Awake()
     {
-        Snapper.SetSnapCallback((pid, pos) =>
+        Snapper.OnAttachChanged += (pid, pos) =>
         {
-
-        });
+            if (pid != 0)
+                CameraManager.Instance.StopMotion();
+            else
+                CameraManager.Instance.StartMotion();
+        };
+        Snapper.SnapWhileMoving = false;
         Snapper.SetLogCallback(msg =>
         {
             Debug.LogError(msg);

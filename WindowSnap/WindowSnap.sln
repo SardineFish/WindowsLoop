@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.29123.88
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LibTest", "LibTest.csproj", "{50D8655B-9C82-4EEA-8362-C2048CE7AADD}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WindowSnap", "WindowSnap.csproj", "{50D8655B-9C82-4EEA-8362-C2048CE7AADD}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

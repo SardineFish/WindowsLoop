@@ -29,7 +29,6 @@ public class PlayerTracker : MonoBehaviour
 
             var halfSize = CameraManager.Instance.worldScreenSize / 2;
             var offset = MathUtility.Frac(halfSize);
-            Debug.Log(offset);
             snapPos = MathUtility.Floor(Target.position.ToVector2()) + offset;
         }
 

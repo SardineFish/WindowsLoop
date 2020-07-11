@@ -28,7 +28,7 @@ namespace WindowSnap
         static IntPtr hWnd;
         static RECT clientSnapRect;
         //static RECT screenSnapRect;
-        static Action<int, Vec2> Attached; // (pid, position)
+        public static event Action<int, Vec2> OnAttachChanged;
         internal static Action<string> Log;
         static int dragOffsetX;
         static int dragOffsetY;
@@ -216,7 +216,7 @@ namespace WindowSnap
                     SharedMemory.Self.Write(Address.AttachedWindowPID, attachedWindowPID);
                     SharedMemory.Self.Flush();
                     Log($"Attached({attachedWindowPID})");
-                    Attached(
+                    OnAttachChanged?.Invoke(
                         attachedWindowPID,
                         attachedWindowPID == 0
                         ? new Vec2()
@@ -232,10 +232,6 @@ namespace WindowSnap
             return CallWindowProc(originalWndProcPtr, hWnd, msg, wParam, lParam);
         }
 
-        public static void SetSnapCallback(Action<int, Vec2> callback)
-        {
-            Attached = callback;
-        }
         public static void SetLogCallback(Action<string> callback)
         {
             Log = callback;
@@ -249,7 +245,7 @@ namespace WindowSnap
                 var attachedWindowPID = SharedMemory.Self.ReadInt32(Address.AttachedWindowPID);
                 var page = SharedMemory.GetPageByPID(attachedWindowPID);
                 Log($"Attached({attachedWindowPID})");
-                Attached(
+                OnAttachChanged?.Invoke(
                     attachedWindowPID,
                     attachedWindowPID == 0
                     ? new Vec2()
