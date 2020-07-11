@@ -2,7 +2,7 @@
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace LibTest
+namespace WindowSnap
 {
     public static class Native
     {

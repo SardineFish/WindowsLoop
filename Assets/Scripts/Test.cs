@@ -1,35 +1,30 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using LibTest;
+using WindowSnap;
 
 public class Test : MonoBehaviour
 {
     // Start is called before the first frame update
     void Start()
     {
-        LibTest.Foo.SetSnapCallback(OnSnaped);
-        LibTest.Foo.SetLogCallback((text) =>
+        /*WindowSnap.Snapper.Init();
+        WindowSnap.Snapper.SetSnapCallback(OnSnaped);
+
+        WindowSnap.Snapper.SetLogCallback((text) =>
         {
             Debug.LogError(text);
-        });
-        StartCoroutine(MoveWindow());
+        });*/
     }
 
     // Update is called once per frame
     void Update()
     {
-        LibTest.Foo.SetSnapRect(new LibTest.Rect(new Vec2(0, 0), new Vec2(10,10)));
+
+        //Snapper.SetSnapRect(new WindowSnap.Rect(new Vec2(0, 0), new Vec2(10,10)));
+        //Snapper.TickPerSecond();
     }
-    IEnumerator MoveWindow()
-    {
-        while(true)     
-        {
-            Foo.TickPerSecond();
-            yield return new WaitForSeconds(1);
-        }
-    }
-    void OnSnaped(int pid, LibTest.Vec2 pos)
+    void OnSnaped(int pid, Vec2 pos)
     {
         //Debug.Log(pos.ToString());
     }

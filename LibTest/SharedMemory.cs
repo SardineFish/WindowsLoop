@@ -4,7 +4,7 @@ using System.Diagnostics;
 using System.IO.MemoryMappedFiles;
 using System.Linq;
 
-namespace LibTest
+namespace WindowSnap
 {
     public static class SharedMemory
     {
@@ -53,14 +53,14 @@ namespace LibTest
             var pageTable = SharedMemory.pageTable;
             var runningPIDs = new HashSet<int>(
                 Process.GetProcessesByName(Process.GetCurrentProcess().ProcessName).Select(p => p.Id));
-            Foo.Log($"Processes: {runningPIDs.Count}");
+            Snapper.Log($"Processes: {runningPIDs.Count}");
             for (var i = 1; i < PageCount; i++)
             {
                 if (!runningPIDs.Contains(pageTable[i]))
                 {
                     page0.Write(i * sizeof(int), Process.GetCurrentProcess().Id);
                     page0.Flush();
-                    Foo.Log(SharedMemory.pageTable.Aggregate("", (a, b) => $"{a}{b} "));
+                    Snapper.Log(SharedMemory.pageTable.Aggregate("", (a, b) => $"{a}{b} "));
                     return i;
                 }
             }

@@ -1,4 +1,4 @@
-﻿namespace LibTest
+﻿namespace WindowSnap
 {
     public struct Rect
     {

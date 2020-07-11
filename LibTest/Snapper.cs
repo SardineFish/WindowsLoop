@@ -4,11 +4,11 @@ using System.Diagnostics;
 using System.IO.MemoryMappedFiles;
 using System.Runtime.InteropServices;
 using System.Text;
-using static LibTest.Native;
+using static WindowSnap.Native;
 
-namespace LibTest
+namespace WindowSnap
 {
-    public static class Foo
+    public static class Snapper
     {
         const int SnapThreshold = 40;
         const int ClientWidth = 600;
@@ -33,7 +33,7 @@ namespace LibTest
         static int dragOffsetX;
         static int dragOffsetY;
 
-        static Foo()
+        static Snapper()
         {
             PID = Process.GetCurrentProcess().Id;
             var threadId = GetCurrentThreadId();
@@ -43,7 +43,7 @@ namespace LibTest
                 GetClassName(hWnd, classText, classText.Capacity);
                 if (classText.ToString() == UnityWindowClassName)
                 {
-                    Foo.hWnd = hWnd;
+                    Snapper.hWnd = hWnd;
                     return false;
                 }
                 return true;
@@ -63,26 +63,7 @@ namespace LibTest
             SharedMemory.Init();
             SharedMemory.Self.Write(Address.PID, PID);
             SharedMemory.Self.Flush();
-            UpdateScreenSnapRect();
-            Log($"Window Handle: {hWnd}");
-            Log($"Page: {SharedMemory.selfIndex}");
-            Log($"Others Count: {SharedMemory.Others.Count}");
-        }
-
-        public static List<Rect> GetAdjacentWindowBounds()
-        {
-            throw new NotImplementedException();
-        }
-        public static void SetSnapRect(Rect clientSnapRect)
-        {
-            Foo.clientSnapRect = new RECT
-            {
-                Left = (int)Math.Round(clientSnapRect.Min.X),
-                Top = (int)Math.Round(clientSnapRect.Min.Y),
-                Right = (int)Math.Round(clientSnapRect.Max.X),
-                Bottom = (int)Math.Round(clientSnapRect.Max.Y),
-            };
-            Foo.clientSnapRect = new RECT
+            Snapper.clientSnapRect = new RECT
             {
                 Left = 0,
                 Top = 0,
@@ -90,10 +71,15 @@ namespace LibTest
                 Bottom = 400,
             };
             UpdateScreenSnapRect();
+            Log($"Window Handle: {hWnd}");
+            Log($"Page: {SharedMemory.selfIndex}");
+            Log($"Others Count: {SharedMemory.Others.Count}");
+            
         }
-        static void Snap()
-        {
 
+        public static List<Rect> GetAdjacentWindowBounds()
+        {
+            throw new NotImplementedException();
         }
         static void UpdateScreenSnapRect()
         {
@@ -253,12 +239,6 @@ namespace LibTest
         public static void SetLogCallback(Action<string> callback)
         {
             Log = callback;
-            Init();
-        }
-        public static void TickPerSecond()
-        {
-            //Log($"Screen Snap Rect: {GetScreenSnapRect().Left}, {GetScreenSnapRect().Top}");
-            TickPerFrame();
         }
         public static void TickPerFrame()
         {
