@@ -185,8 +185,8 @@ namespace WindowSnap
                             Math.Round((screenSnapRect.Left - offsetX) / TileSize) * TileSize + offsetX);
                         var y = (int)(
                             Math.Round((screenSnapRect.Top - offsetY) / TileSize) * TileSize + offsetY);
+                        screenSnapRect = screenSnapRect.MoveTo(x, y);
                         windowRect = screenSnapRect
-                            .MoveTo(x, y)
                             .Translate(-ClientOffsetX, -ClientOffsetY)
                             .Translate(-clientSnapRect.Left, -clientSnapRect.Top);
                     }
@@ -215,14 +215,13 @@ namespace WindowSnap
                     attachedWindowPage.Flush();
                     SharedMemory.Self.Write(Address.AttachedWindowPID, attachedWindowPID);
                     SharedMemory.Self.Flush();
-                    Log($"Attached({attachedWindowPID})");
-                    OnAttachChanged?.Invoke(
-                        attachedWindowPID,
-                        attachedWindowPID == 0
+                    var relativePosition = attachedWindowPID == 0
                         ? new Vec2()
                         : new Vec2(
-                            targetScreenSnapRect.Left,
-                            targetScreenSnapRect.Top));
+                            targetScreenSnapRect.Left - screenSnapRect.Left,
+                            targetScreenSnapRect.Top - screenSnapRect.Top);
+                    Log($"Attached({attachedWindowPID}, [{relativePosition.X}, {relativePosition.Y}])");
+                    OnAttachChanged?.Invoke(attachedWindowPID, relativePosition);
                     break;
                 }
             case WM.CLOSE:
@@ -244,14 +243,13 @@ namespace WindowSnap
                 SharedMemory.Self.Flush();
                 var attachedWindowPID = SharedMemory.Self.ReadInt32(Address.AttachedWindowPID);
                 var page = SharedMemory.GetPageByPID(attachedWindowPID);
-                Log($"Attached({attachedWindowPID})");
-                OnAttachChanged?.Invoke(
-                    attachedWindowPID,
-                    attachedWindowPID == 0
+                var relativePosition = attachedWindowPID == 0
                     ? new Vec2()
                     : new Vec2(
-                        page.ReadInt32(Address.ScreenSnapRectX),
-                        page.ReadInt32(Address.ScreenSnapRectY)));
+                        page.ReadInt32(Address.ScreenSnapRectX) - GetScreenSnapRect().Left,
+                        page.ReadInt32(Address.ScreenSnapRectY) - GetScreenSnapRect().Top);
+                Log($"Attached({attachedWindowPID}, [{relativePosition.X}, {relativePosition.Y}])");
+                OnAttachChanged?.Invoke(attachedWindowPID, relativePosition);
             }
         }
     }

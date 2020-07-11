@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace WindowSnap
+﻿namespace WindowSnap
 {
-    public static class Address
+    public class Address
     {
         public const int PID = 0;
         public const int ScreenSnapRectPos = 4;
