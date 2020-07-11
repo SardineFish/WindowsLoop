@@ -2,20 +2,11 @@
 using System.Collections;
 using WindowSnap;
 using System.Collections.Generic;
+using System.Linq;
 
 public class SnapManager : Singleton<SnapManager>
 {
-    Dictionary<int, GameInstanceData> pages = new Dictionary<int, GameInstanceData>();
-    public GameInstanceData GetGameData(int pid)
-    {
-        if(!pages.ContainsKey(pid))
-        {
-            var page = WindowSnap.SharedMemory.GetPageByPID(pid);
-            if (page != null)
-                pages[pid] = new GameInstanceData(page);
-        }
-        return pages[pid];
-    }
+    public GameInstanceData GetGameData(int pid) => new GameInstanceData(SharedMemory.GetPageByPID(pid));
     GameInstanceData SelfData;
     private void Awake()
     {
@@ -35,11 +26,55 @@ public class SnapManager : Singleton<SnapManager>
         Snapper.Init();
 
         SelfData = new GameInstanceData(SharedMemory.Self);
+
+        if(SharedMemory.Others.Count == 0)
+        {
+            SelfData.IsActiveInstance = true;
+
+            PublicData.ActiveInstancePID = Snapper.PID;
+            PublicData.Flush();
+        }
+        else
+        {
+            SelfData.IsActiveInstance = false;
+        }
+
+        SelfData.Flush();
+        WriteTileData();
+        SelfData.Flush();
+
     }
+
+    void WriteTileData()
+    {
+        var rect = GameMap.Instance.LoopArea;
+
+        var tiles = new int[rect.size.x, rect.size.y];
+
+        var tilemap = GameMap.Instance;
+
+        for(int x = 0; x < rect.size.x; ++x)
+        {
+            for(int y = 0; y < rect.size.y; ++y)
+            {
+                var pos = new Vector2Int(x + rect.xMin, y + rect.yMin);
+                var tile = tilemap.GetBaseTileAt(pos);
+                if (tile)
+                {
+                    tiles[x, y] = tile.GetInstanceID();
+                }
+                else
+                    tiles[x, y] = 0;
+            }
+        }
+
+        SelfData.WriteTileData(tiles);
+    }
+
     // Use this for initialization
     void Start()
     {
-
+        Debug.LogError(GameMap.Instance.GetBaseTileAt(new Vector2Int(5, 0)).GetInstanceID());
     }
 
     // Update is called once per frame
@@ -56,6 +91,26 @@ public class SnapManager : Singleton<SnapManager>
 
     private void LateUpdate()
     {
+        if(SelfData.IsActiveInstance)
+        {
+            GameSystem.Instance.Player.EnableControl = true;
+        }
         
+        else
+        {
+            var activePID = PublicData.ActiveInstancePID;
+            var activeInstance = GetGameData(activePID);
+
+            var pos = activeInstance.PlayerPosition;
+            var velocity = activeInstance.PlayerVelocity;
+
+            SelfData.PlayerPosition = pos;
+            SelfData.PlayerVelocity = velocity;
+            SelfData.Flush();
+
+            GameSystem.Instance.Player.SetPositionVelocity(pos, velocity);
+
+            Debug.LogError($"Sync from active instance {activePID}");
+        }
     }
 }

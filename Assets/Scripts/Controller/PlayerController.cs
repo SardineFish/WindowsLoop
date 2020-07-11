@@ -9,6 +9,9 @@ public class PlayerController : MonoBehaviour
 {
     const float FIXED_DELTA_TIME = 0.02f;
     [SerializeField]
+    private bool m_EnableControl = true;
+
+    [SerializeField]
     [Delayed]
     private float m_Speed = 10;
     [SerializeField]
@@ -53,6 +56,12 @@ public class PlayerController : MonoBehaviour
     new SpriteRenderer renderer;
     StateCache jumpCache = new StateCache(0.2f);
     StateCache onGroundCache = new StateCache(0.1f);
+
+    public bool EnableControl
+    {
+        get => m_EnableControl;
+        set => m_EnableControl = value;
+    }
 
 
     public new Rigidbody2D rigidbody;
@@ -155,6 +164,12 @@ public class PlayerController : MonoBehaviour
         
     }
 
+    public void SetPositionVelocity(Vector2 pos, Vector2 velocity)
+    {
+        rigidbody.MovePosition(pos);
+        rigidbody.velocity = velocity;
+    }
+
     public void Jump()
     {
         if (onGroundCache)
@@ -164,6 +179,12 @@ public class PlayerController : MonoBehaviour
     }
     private void FixedUpdate()
     {
+        if(!EnableControl)
+        {
+            rigidbody.bodyType = RigidbodyType2D.Kinematic;
+
+            return;
+        }
         if (jumpCache.Value)
             Jump();
 

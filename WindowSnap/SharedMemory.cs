@@ -8,7 +8,7 @@ namespace WindowSnap
 {
     public static class SharedMemory
     {
-        const int PageSize = 4096;
+        const int PageSize = 64 << 10;
         const int PageCount = 16;
         public static MemoryMappedViewAccessor Self { get; set; }
         public static List<MemoryMappedViewAccessor> Others

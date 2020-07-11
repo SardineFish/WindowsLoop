@@ -126,7 +126,7 @@ public class GameMap : Singleton<GameMap>
     void RemoveRuntimeTileAt(int x, int y)
         => RuntimeMap.SetTile(new Vector3Int(x, y, 0), null);
 
-    int FloorReminder(int x, int m) =>
+    public static int FloorReminder(int x, int m) =>
         x >= 0
         ? x % m
         : (m + x % m) % m;
@@ -134,6 +134,18 @@ public class GameMap : Singleton<GameMap>
     public TileBase GetTileAt(Vector2 pos)
     {
         return RuntimeMap.GetTile(pos.ToVector3Int());
+    }
+
+    public TileBase GetBaseTileAt(Vector2Int pos)
+    {
+        var pos3 = new Vector3Int(
+            FloorReminder(pos.x - LoopArea.xMin, LoopArea.size.x),
+            FloorReminder(pos.y - LoopArea.yMin, LoopArea.size.y),
+            0);
+        pos3 += LoopArea.min.ToVector3Int();
+
+        var tile = BaseMap.GetTile(pos3);
+        return tile;
     }
 
 }
