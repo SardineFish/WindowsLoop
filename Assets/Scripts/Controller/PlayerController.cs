@@ -50,10 +50,12 @@ public class PlayerController : MonoBehaviour
     Vector2 velocity;
     bool onGround = false;
     new BoxCollider2D collider;
-    new Rigidbody2D rigidbody;
     new SpriteRenderer renderer;
     StateCache jumpCache = new StateCache(0.2f);
     StateCache onGroundCache = new StateCache(0.1f);
+
+
+    public new Rigidbody2D rigidbody;
 
     private void Awake()
     {
