@@ -4,6 +4,7 @@ using UnityRawInput;
 
 [RequireComponent(typeof(BoxCollider2D))]
 [RequireComponent(typeof(Rigidbody2D))]
+[RequireComponent(typeof(SpriteRenderer))]
 public class PlayerController : MonoBehaviour
 {
     const float FIXED_DELTA_TIME = 0.02f;
@@ -50,6 +51,7 @@ public class PlayerController : MonoBehaviour
     bool onGround = false;
     new BoxCollider2D collider;
     new Rigidbody2D rigidbody;
+    new SpriteRenderer renderer;
     StateCache jumpCache = new StateCache(0.2f);
     StateCache onGroundCache = new StateCache(0.1f);
 
@@ -57,7 +59,7 @@ public class PlayerController : MonoBehaviour
     {
         collider = GetComponent<BoxCollider2D>();
         rigidbody = GetComponent<Rigidbody2D>();
-        
+        renderer = GetComponent<SpriteRenderer>();
     }
     private void OnEnable()
     {
@@ -139,6 +141,11 @@ public class PlayerController : MonoBehaviour
         jumpCache.Update(Time.time);
         onGroundCache.CacheTime = m_CoyoteTime;
         onGroundCache.Update(Time.time);
+
+        if (rawMovementInput.x < 0)
+            renderer.flipX = true;
+        else if(rawMovementInput.x > 0)
+            renderer.flipX = false;
     }
 
     private void LateUpdate()
