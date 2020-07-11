@@ -17,6 +17,13 @@ public class GameMap : Singleton<GameMap>
         RuntimeMap = obj.AddComponent<Tilemap>();
         obj.transform.parent = transform;
         obj.AddComponent<TilemapRenderer>();
+        var collider = obj.AddComponent<TilemapCollider2D>();
+        collider.usedByComposite = true;
+        var rigidbody = obj.AddComponent<Rigidbody2D>();
+        rigidbody.bodyType = RigidbodyType2D.Static;
+        var composite = obj.AddComponent<CompositeCollider2D>();
+        composite.generationType = CompositeCollider2D.GenerationType.Synchronous;
+        composite.geometryType = CompositeCollider2D.GeometryType.Polygons;
         BaseMap.gameObject.SetActive(false);
     }
 

@@ -3,6 +3,7 @@ using System.Collections;
 using UnityRawInput;
 
 [RequireComponent(typeof(BoxCollider2D))]
+[RequireComponent(typeof(Rigidbody2D))]
 public class PlayerController : MonoBehaviour
 {
     const float FIXED_DELTA_TIME = 0.02f;
@@ -42,10 +43,12 @@ public class PlayerController : MonoBehaviour
     Vector2 velocity;
     bool onGround = false;
     new BoxCollider2D collider;
+    new Rigidbody2D rigidbody;
 
     private void Awake()
     {
         collider = GetComponent<BoxCollider2D>();
+        rigidbody = GetComponent<Rigidbody2D>();
     }
     private void OnEnable()
     {
@@ -61,6 +64,36 @@ public class PlayerController : MonoBehaviour
     void Start()
     {
 
+    }
+
+    private void OnCollisionStay2D(Collision2D collision)
+    {
+        var footheight = (collider.transform.position.ToVector2() + collider.offset - collider.size / 2).y - collider.edgeRadius;
+        foreach (var contact in collision.contacts)
+        {
+            if (contact.normal.y > 0.5f && Mathf.Abs(contact.point.y - footheight) < 0.1f)
+            {
+                onGround = true;
+            }
+            Debug.DrawLine(contact.point, contact.point + contact.normal, Color.red);
+
+        }
+    }
+
+    private void OnCollisionEnter2D(Collision2D collision)
+    {
+        var footheight = (collider.transform.position.ToVector2() + collider.offset - collider.size / 2).y - collider.edgeRadius;
+        foreach (var contact in collision.contacts)
+        {
+            if (contact.normal.y > 0.5f && Mathf.Abs(contact.point.y - footheight) < 0.1f)
+            {
+                onGround = true;
+            }
+            if (Mathf.Abs(contact.normal.y) > 0.5f)
+                velocity.y = 0;
+            Debug.DrawLine(contact.point, contact.point + contact.normal, Color.red);
+
+        }
     }
 
     // Update is called once per frame
@@ -109,107 +142,28 @@ public class PlayerController : MonoBehaviour
 
         velocity = new Vector2(
             Mathf.Lerp(velocity.x, rawMovementInput.x * m_Speed, (1 - m_MoveDamping)),
-            velocity.y - gravity * Time.fixedDeltaTime
+            velocity.y
         );
 
-        //velocity.y = 0;
-
-        Vector2 peneration = Vector2.zero;
-        Vector2 time = -Vector2.one;
-        var clampedVelocity = velocity;
-
-        float TIME_THRESHOLD = -0.0001f;
-
-        // down
-        var (downPenetration, downTime) = CollisionCheck(Time.fixedDeltaTime, velocity, Vector2.down, Vector2.left);
-        if(downTime > TIME_THRESHOLD)
-        {
-            time.y = downTime;
-            peneration.y = downPenetration.y;
-            clampedVelocity.y = velocity.y - downPenetration.y / Time.fixedDeltaTime;
-        }
-        var (upPenetration, upTime) = CollisionCheck(Time.fixedDeltaTime, velocity, Vector2.up, Vector2.left);
-        if(upTime > TIME_THRESHOLD)
-        {
-            time.y = upTime;
-            peneration.y = upPenetration.y;
-            clampedVelocity.y = velocity.y - upPenetration.y / Time.fixedDeltaTime;
-        }
-        var (leftPen, leftTime) = CollisionCheck(Time.fixedDeltaTime, velocity, Vector2.left, Vector2.up);
-        if(leftTime > TIME_THRESHOLD)
-        {
-            time.x = leftTime;
-            clampedVelocity.x = velocity.x - leftPen.x / Time.fixedDeltaTime;
-        }
-        var (rightPen, rightTime) = CollisionCheck(Time.fixedDeltaTime, velocity, Vector2.right, Vector2.up);
-        if (rightTime > TIME_THRESHOLD)
-        {
-            time.x = rightTime;
-            clampedVelocity.x = velocity.x - rightPen.x / Time.fixedDeltaTime;
-        }
-
-        
-        if((time.y <= time.x || time.x < 0) && time.y >= TIME_THRESHOLD)
-        {
-            if (velocity.y < 0)
-                onGround = true;
-
-            velocity.y = clampedVelocity.y;
-
-            time.x = -1;
-            (leftPen, leftTime) = CollisionCheck(Time.fixedDeltaTime, velocity, Vector2.left, Vector2.up);
-            if (leftTime > TIME_THRESHOLD)
-            {
-                time.x = leftTime;
-                clampedVelocity.x = velocity.x - leftPen.x / Time.fixedDeltaTime;
-            }
-            (rightPen, rightTime) = CollisionCheck(Time.fixedDeltaTime, velocity, Vector2.right, Vector2.up);
-            if (rightTime > TIME_THRESHOLD)
-            {
-                time.x = rightTime;
-                clampedVelocity.x = velocity.x - rightPen.x / Time.fixedDeltaTime;
-            }
-
-            if(time.x > TIME_THRESHOLD && time.x < Time.fixedDeltaTime)
-            {
-                velocity.x = clampedVelocity.x;
-            }
-        }
-        else if ((time.x < time.y || time.y < 0) && time.x >= TIME_THRESHOLD)
-        {
-            velocity.x = clampedVelocity.x;
-
-            time.y = -1;
-            (downPenetration, downTime) = CollisionCheck(Time.fixedDeltaTime, velocity, Vector2.down, Vector2.left);
-            if (downTime > TIME_THRESHOLD)
-            {
-                time.y = downTime;
-                peneration.y = downPenetration.y;
-                clampedVelocity.y = velocity.y - downPenetration.y / Time.fixedDeltaTime;
-            }
-            (upPenetration, upTime) = CollisionCheck(Time.fixedDeltaTime, velocity, Vector2.up, Vector2.left);
-            if (upTime > TIME_THRESHOLD)
-            {
-                time.y = upTime;
-                peneration.y = upPenetration.y;
-                clampedVelocity.y = velocity.y - upPenetration.y / Time.fixedDeltaTime;
-            }
-
-            if(time.y > TIME_THRESHOLD && time.y < Time.fixedDeltaTime)
-            {
-                if (velocity.y < 0)
-                    onGround = true;
-                velocity.y = clampedVelocity.y;
-            }
-        }
+        if(rigidbody.velocity.y < 0)
+            Physics2D.gravity = Vector2.down * gravity * m_FallGravityScale;
         else
-        {
-            
-        }
+            Physics2D.gravity = Vector2.down * gravity;
 
-        transform.Translate(velocity.ToVector3() * Time.fixedDeltaTime);
 
-        // Debug.Log(velocity);
+        Vector2 v;
+        v.x = velocity.x;
+
+        if (velocity.y > 0)
+            v.y = velocity.y;
+        else
+            v.y = rigidbody.velocity.y;
+
+
+        rigidbody.velocity = v;
+
+        velocity.y = 0;
+        
     }
 
     (Vector2 penetration, float time) CollisionCheck(float dt, Vector2 velocity, Vector2 normal, Vector2 tangent)
