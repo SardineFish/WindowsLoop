@@ -40,6 +40,18 @@ public class CameraManager : Singleton<CameraManager>
         }
     }
 
+    public RectInt SnapRect
+    {
+        get
+        {
+            var halfSize = worldScreenSize / 2;
+            RectInt rect = new RectInt();
+            rect.min = MathUtility.RoundToVector2Int(camera.transform.position.ToVector2() - halfSize);
+            rect.max = MathUtility.RoundToVector2Int(camera.transform.position.ToVector2() + halfSize);
+            return rect;
+        }
+    }
+
     public Vector2 worldScreenSize => 
         camera 
         ? new Vector2(camera.pixelWidth / GameSystem.RenderTileSize, camera.pixelHeight / GameSystem.RenderTileSize) 
@@ -82,7 +94,7 @@ public class CameraManager : Singleton<CameraManager>
         GameMap.Instance.UpdateVisibleArea(preloadRect);
     }
 
-    private void OnDrawGizmos()
+    private void OnDrawGizmosSelected()
     {
         var rect = outterViewRect;
         Gizmos.color = Color.green;
@@ -92,7 +104,11 @@ public class CameraManager : Singleton<CameraManager>
         Gizmos.color = Color.yellow;
         Gizmos.DrawWireCube(rect.center.ToVector3(), rect.size.ToVector3());
 
-        rect = innerViewRect;
+    }
+
+    private void OnDrawGizmos()
+    {
+        var rect = SnapRect;
         Gizmos.color = Color.cyan;
         Gizmos.DrawWireCube(rect.center.ToVector3(), rect.size.ToVector3());
     }
