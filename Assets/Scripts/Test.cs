@@ -23,7 +23,7 @@ public class Test : MonoBehaviour
     }
     IEnumerator MoveWindow()
     {
-        while(true)
+        while(true)     
         {
             Foo.TickPerSecond();
             yield return new WaitForSeconds(1);
