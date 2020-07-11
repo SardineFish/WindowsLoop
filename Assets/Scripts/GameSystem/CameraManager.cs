@@ -10,7 +10,7 @@ public class CameraManager : Singleton<CameraManager>
     [SerializeField]
     private bool m_EnablePreload = true;
 
-    public RectInt cameraBlockRect
+    public RectInt outterViewRect
     {
         get
         {
@@ -18,6 +18,18 @@ public class CameraManager : Singleton<CameraManager>
             RectInt rect = new RectInt();
             rect.min = MathUtility.FloorToInt(transform.position.ToVector2() - halfSize);
             rect.max = MathUtility.CeilToInt(transform.position.ToVector2() + halfSize);
+            return rect;
+        }
+    }
+
+    public RectInt innerViewRect
+    {
+        get
+        {
+            var halfSize = worldScreenSize / 2;
+            RectInt rect = new RectInt();
+            rect.min = MathUtility.CeilToInt(transform.position.ToVector2() - halfSize);
+            rect.max = MathUtility.FloorToInt(transform.position.ToVector2() + halfSize);
             return rect;
         }
     }
@@ -31,7 +43,7 @@ public class CameraManager : Singleton<CameraManager>
     {
         get
         {
-            var rect = cameraBlockRect;
+            var rect = outterViewRect;
             rect.min -= new Vector2Int(m_PreloadExtend, m_PreloadExtend);
             rect.max += new Vector2Int(m_PreloadExtend, m_PreloadExtend);
             return rect;
@@ -66,12 +78,16 @@ public class CameraManager : Singleton<CameraManager>
 
     private void OnDrawGizmos()
     {
-        var rect = cameraBlockRect;
+        var rect = outterViewRect;
         Gizmos.color = Color.green;
         Gizmos.DrawWireCube(rect.center.ToVector3(), rect.size.ToVector3());
 
         rect = preloadRect;
         Gizmos.color = Color.yellow;
+        Gizmos.DrawWireCube(rect.center.ToVector3(), rect.size.ToVector3());
+
+        rect = innerViewRect;
+        Gizmos.color = Color.cyan;
         Gizmos.DrawWireCube(rect.center.ToVector3(), rect.size.ToVector3());
     }
 }
