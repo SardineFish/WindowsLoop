@@ -5,7 +5,7 @@
   </PropertyGroup>
 
   <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="copy $(TargetPath) $(ProjectDir)\..\Build\WindowsLoop_Data\Managed\" />
+    <Exec Command="copy $(TargetPath) $(ProjectDir)\..\Build\WindowsLoop_Data\Managed\&#xD;&#xA;copy $(TargetPath) $(ProjectDir)\..\Build\WindowsLoop_Data\Managed\LibTest.dll" />
   </Target>
 
 </Project>
