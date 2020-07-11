@@ -6,18 +6,14 @@ using System.Linq;
 
 public class SnapManager : Singleton<SnapManager>
 {
+
     public GameInstanceData GetGameData(int pid) => new GameInstanceData(SharedMemory.GetPageByPID(pid));
     GameInstanceData SelfData;
+    Dictionary<int, AttachedInstanceData> GameInstanceMapData = new Dictionary<int, AttachedInstanceData>();
     private void Awake()
     {
-        Snapper.OnAttachChanged += (targetPID, targetPos) =>
-        {
-            if (targetPID != 0)
-                CameraManager.Instance.StopMotion();
-            else
-                CameraManager.Instance.StartMotion();
-            Debug.LogError(targetPos);
-        };
+        Snapper.OnAttached += Snapper_OnAttached;
+        Snapper.OnDetached += Snapper_OnDetached;
         Snapper.SnapWhileMoving = false;
         Snapper.SetLogCallback(msg =>
         {
@@ -45,6 +41,94 @@ public class SnapManager : Singleton<SnapManager>
 
     }
 
+    private void Snapper_OnDetached(int obj)
+    {
+
+    }
+
+    private void Snapper_OnAttached(int pid, Vec2 relativePos)
+    {
+        Vector2Int posInt = new Vector2Int(Mathf.RoundToInt(relativePos.X / 40), Mathf.RoundToInt(relativePos.Y / 40));
+
+        if (!GameInstanceMapData.ContainsKey(pid))
+        {
+            var data = GetGameData(pid);
+            if(data.Valid)
+            {
+                var tileData = new AttachedInstanceData()
+                {
+                    PID = pid,
+                    TileRange = data.TileRange,
+                    TileData = data.ReadTileData()
+                };
+                GameInstanceMapData[pid] = tileData;
+            }
+        }
+        if(GameInstanceMapData.ContainsKey(pid))
+        {
+            var instanceData = GetGameData(pid);
+            var attachedData = GameInstanceMapData[pid];
+            attachedData.AttachPoint = posInt;
+            attachedData.AttachPoint.y = -posInt.y;
+            var viewportBlocks = CameraManager.Instance.SnapRect;
+
+            RectInt syncRange = new RectInt();
+            if (posInt.x == -viewportBlocks.size.x) // snap to left
+            {
+                syncRange.xMin = -CameraManager.Instance.preloadExtend;
+                syncRange.xMax = 0;
+                syncRange.yMin = Mathf.Max(0, attachedData.AttachPoint.y);
+                syncRange.yMax = Mathf.Min(viewportBlocks.size.y, attachedData.AttachPoint.y + viewportBlocks.size.y);
+            }
+            else if (posInt.x == viewportBlocks.size.x) // snap to right
+            {
+                syncRange.xMin = viewportBlocks.size.x;
+                syncRange.xMax = viewportBlocks.size.x + CameraManager.Instance.preloadExtend;
+                syncRange.yMin = Mathf.Max(0, attachedData.AttachPoint.y);
+                syncRange.yMax = Mathf.Min(viewportBlocks.size.y, attachedData.AttachPoint.y + viewportBlocks.size.y);
+            }
+            else if (posInt.y == viewportBlocks.size.y) // snap to bottom
+            {
+                syncRange.xMin = Mathf.Max(0, attachedData.AttachPoint.x);
+                syncRange.xMax = Mathf.Min(viewportBlocks.size.x, attachedData.AttachPoint.x + viewportBlocks.size.x);
+                syncRange.yMin = -CameraManager.Instance.preloadExtend;
+                syncRange.yMax = 0;
+            }
+            else if (posInt.y == -viewportBlocks.size.y) // snap to top
+            {
+                syncRange.xMin = Mathf.Max(0, attachedData.AttachPoint.x);
+                syncRange.xMax = Mathf.Min(viewportBlocks.size.x, attachedData.AttachPoint.x + viewportBlocks.size.x);
+                syncRange.yMin = viewportBlocks.size.y;
+                syncRange.yMax = viewportBlocks.size.y + CameraManager.Instance.preloadExtend;
+            }
+
+            attachedData.SyncTilesArea = syncRange;
+            var min = syncRange.min + viewportBlocks.min;
+            var max = syncRange.max + viewportBlocks.min;
+            syncRange.min = min;
+            syncRange.max = max;
+
+            var instanceViewport = instanceData.ViewRect;
+
+            for(int x = syncRange.xMin; x < syncRange.xMax; ++x)
+            {
+                for(int y = syncRange.yMin; y < syncRange.yMax; ++y)
+                {
+                    var pos = new Vector2Int(x, y);
+                    pos -= viewportBlocks.min;
+                    pos -= attachedData.AttachPoint;
+                    pos += instanceViewport.min;
+
+                    var tile = attachedData.GetTileAt(pos);
+                    GameMap.Instance.SetAttachedTile(new Vector2Int(x, y), tile);
+                }
+            }
+            Debug.LogError($"{syncRange.min - viewportBlocks.min}, {syncRange.max - viewportBlocks.min}");
+        }
+
+        CameraManager.Instance.StopMotion();
+    }
+
     void WriteTileData()
     {
         var rect = GameMap.Instance.LoopArea;
@@ -67,7 +151,7 @@ public class SnapManager : Singleton<SnapManager>
                     tiles[x, y] = 0;
             }
         }
-
+        SelfData.TileRange = rect;
         SelfData.WriteTileData(tiles);
     }
 
@@ -110,7 +194,7 @@ public class SnapManager : Singleton<SnapManager>
 
             GameSystem.Instance.Player.SetPositionVelocity(pos, velocity);
 
-            Debug.LogError($"Sync from active instance {activePID}");
+            //Debug.LogError($"Sync from active instance {activePID}");
         }
     }
 }

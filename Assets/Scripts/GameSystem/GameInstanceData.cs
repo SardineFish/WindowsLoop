@@ -15,17 +15,12 @@ public struct GameInstanceData
         this.page = page;
     }
 
+    public bool Valid => page != null;
+
     public int PID
     {
         get => page.ReadInt32(GameDataAddr.PID);
         set => page.Write(GameDataAddr.PID, value);
-    }
-
-
-    public int AttachedPID
-    {
-        get => page.ReadInt32(GameDataAddr.AttachedWindowPID);
-        set => page.Write(GameDataAddr.AttachedWindowPID, value);
     }
 
     public Vector2 PlayerPosition
@@ -157,17 +152,17 @@ public static class PublicData
 
 public class GameDataAddr : WindowSnap.Address
 {
-    public const int ViewRectMin =      PreserveEnd + 0x0;
-    public const int ViewRectMax =      PreserveEnd + 0x8;
-    public const int PlayerPosition =   PreserveEnd + 0x10;
-    public const int PlayerVelocity =   PreserveEnd + 0x18;
-    public const int PlayerAnimTime =   PreserveEnd + 0x20;
-    public const int CameraPos =        PreserveEnd + 0x24;
-    public const int ActiveInstance =   PreserveEnd + 0x2c;
-    public const int TileRangeMin =     PreserveEnd + 0x30;
-    public const int TileRangeMax =     PreserveEnd + 0x38;
+    public const int ViewRectMin =      Preserve + 0x0;
+    public const int ViewRectMax =      Preserve + 0x8;
+    public const int PlayerPosition =   Preserve + 0x10;
+    public const int PlayerVelocity =   Preserve + 0x18;
+    public const int PlayerAnimTime =   Preserve + 0x20;
+    public const int CameraPos =        Preserve + 0x24;
+    public const int ActiveInstance =   Preserve + 0x2c;
+    public const int TileRangeMin =     Preserve + 0x30;
+    public const int TileRangeMax =     Preserve + 0x38;
 
-    public const int TileData =         PreserveEnd + 0x100;
+    public const int TileData =         Preserve + 0x100;
 }
 
 public class PublicDataAddr

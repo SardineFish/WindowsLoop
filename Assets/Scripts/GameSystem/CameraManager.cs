@@ -7,6 +7,8 @@ public class CameraManager : Singleton<CameraManager>
     [SerializeField]
     private int m_PreloadExtend = 2;
 
+    public int preloadExtend => m_PreloadExtend;
+
     [SerializeField]
     private bool m_EnablePreload = true;
 

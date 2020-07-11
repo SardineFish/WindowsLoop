@@ -6,11 +6,13 @@ using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Tilemaps;
 
-public class GameTileData
+public class AttachedInstanceData
 {
-    int PID;
+    public int PID;
     public RectInt TileRange;
     public int[,] TileData;
+    public Vector2Int AttachPoint;
+    public RectInt SyncTilesArea;
 
     public TileBase GetTileAt(Vector2Int pos)
     {

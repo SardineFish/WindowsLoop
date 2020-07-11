@@ -7,14 +7,22 @@ public class GameMap : Singleton<GameMap>
 {
     public Tilemap BaseMap;
     public Tilemap RuntimeMap;
+    public Tilemap AttachMap;
     public RectInt LoopArea;
 
     private RectInt previousActiveRect;
     // Start is called before the first frame update
     void Start()
     {
-        var obj = new GameObject("RuntimeTileMap");
-        RuntimeMap = obj.AddComponent<Tilemap>();
+        RuntimeMap = CreateTilemapLayer("RuntimeTileMap");
+        AttachMap = CreateTilemapLayer("AttachMap");
+        BaseMap.gameObject.SetActive(false);
+    }
+
+    Tilemap CreateTilemapLayer(string name)
+    {
+        var obj = new GameObject(name);
+        var tilemap = obj.AddComponent<Tilemap>();
         obj.transform.parent = transform;
         obj.AddComponent<TilemapRenderer>();
         var collider = obj.AddComponent<TilemapCollider2D>();
@@ -24,7 +32,7 @@ public class GameMap : Singleton<GameMap>
         var composite = obj.AddComponent<CompositeCollider2D>();
         composite.generationType = CompositeCollider2D.GenerationType.Synchronous;
         composite.geometryType = CompositeCollider2D.GeometryType.Polygons;
-        BaseMap.gameObject.SetActive(false);
+        return tilemap;
     }
 
     // Update is called once per frame
@@ -146,6 +154,11 @@ public class GameMap : Singleton<GameMap>
 
         var tile = BaseMap.GetTile(pos3);
         return tile;
+    }
+
+    public void SetAttachedTile(Vector2Int pos, TileBase tile)
+    {
+        RuntimeMap.SetTile(pos.ToVector3Int(), tile);
     }
 
 }
