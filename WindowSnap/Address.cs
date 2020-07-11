@@ -14,14 +14,6 @@
         public const int MessageParam4 = 0x2c;
         public const int AttachedWindowPIDs = 0x40;
 
-
-        public const int ViewRectMin = 0x14;
-        public const int ViewRectMax = 0x1c;
-        public const int PlayerPosition = 0x24;
-        public const int PlayerVelocity = 0x2c;
-        public const int PlayerAnimTime = 0x34;
-        public const int CameraPos = 0x38;
-
-        public const int Preserve = 0x40;
+        public const int Preserve = 0x80;
     }
 }
