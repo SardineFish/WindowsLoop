@@ -1,7 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
+using Cinemachine;
 
-[RequireComponent(typeof(Camera))]
 public class CameraManager : Singleton<CameraManager>
 {
     [SerializeField]
@@ -10,14 +10,17 @@ public class CameraManager : Singleton<CameraManager>
     [SerializeField]
     private bool m_EnablePreload = true;
 
+    [SerializeField]
+    private CinemachineVirtualCamera m_VirtualCamera;
+
     public RectInt outterViewRect
     {
         get
         {
             var halfSize = worldScreenSize / 2;
             RectInt rect = new RectInt();
-            rect.min = MathUtility.FloorToInt(transform.position.ToVector2() - halfSize);
-            rect.max = MathUtility.CeilToInt(transform.position.ToVector2() + halfSize);
+            rect.min = MathUtility.FloorToInt(camera.transform.position.ToVector2() - halfSize);
+            rect.max = MathUtility.CeilToInt(camera.transform.position.ToVector2() + halfSize);
             return rect;
         }
     }
@@ -28,8 +31,8 @@ public class CameraManager : Singleton<CameraManager>
         {
             var halfSize = worldScreenSize / 2;
             RectInt rect = new RectInt();
-            rect.min = MathUtility.CeilToInt(transform.position.ToVector2() - halfSize);
-            rect.max = MathUtility.FloorToInt(transform.position.ToVector2() + halfSize);
+            rect.min = MathUtility.CeilToInt(camera.transform.position.ToVector2() - halfSize);
+            rect.max = MathUtility.FloorToInt(camera.transform.position.ToVector2() + halfSize);
             return rect;
         }
     }
@@ -56,7 +59,6 @@ public class CameraManager : Singleton<CameraManager>
 
     private void Awake()
     {
-        camera = GetComponent<Camera>();
     }
 
     // Use this for initialization
@@ -89,5 +91,15 @@ public class CameraManager : Singleton<CameraManager>
         rect = innerViewRect;
         Gizmos.color = Color.cyan;
         Gizmos.DrawWireCube(rect.center.ToVector3(), rect.size.ToVector3());
+    }
+
+    public void StopMotion()
+    {
+        m_VirtualCamera.Follow = null;
+    }
+
+    public void StartMotion()
+    {
+        m_VirtualCamera.Follow = GameSystem.Instance.Player.transform;
     }
 }

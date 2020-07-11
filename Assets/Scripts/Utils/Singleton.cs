@@ -11,6 +11,7 @@ public class Singleton<T> : UnityEngine.MonoBehaviour where T:Singleton<T>
     {
         get
         {
+            return instance;
             if (instance)
                 return instance;
 
@@ -23,9 +24,16 @@ public class Singleton<T> : UnityEngine.MonoBehaviour where T:Singleton<T>
         }
     }
 
+    public Singleton()
+    {
+        instance = this as T;
+    }
+
     void Awake()
     {
-        if(instance && instance != this)
+        DontDestroyOnLoad(gameObject);
+        return;
+        if (instance && instance != this)
         {
             Destroy(gameObject);
         }
