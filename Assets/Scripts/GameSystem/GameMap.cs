@@ -124,4 +124,9 @@ public class GameMap : Singleton<GameMap>
         ? x % m
         : (m + x % m) % m;
 
+    public TileBase GetTileAt(Vector2 pos)
+    {
+        return RuntimeMap.GetTile(pos.ToVector3Int());
+    }
+
 }
