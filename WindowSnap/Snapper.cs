@@ -122,6 +122,7 @@ namespace WindowSnap
             case WM.ENTERSIZEMOVE:
             case WM.SIZE:
                 {
+                    Log($"EnterMove");
                     GetWindowRect(hWnd, out var windowRect);
                     GetCursorPos(out var cursor);
                     dragOffsetX = cursor.X - windowRect.Left;
@@ -135,6 +136,7 @@ namespace WindowSnap
                 break;
             case WM.EXITSIZEMOVE:
                 {
+                    Log($"ExitMove");
                     GetCursorPos(out var cursor);
                     var windowRect = new RECT
                     {
@@ -185,6 +187,7 @@ namespace WindowSnap
                         attachedWindowPID = page.ReadInt32(Address.PID);
                         break;
                     }
+                    Log($"EdgeSnap");
                     if (snaped)
                     {
                         var offsetX = (double)targetScreenSnapRect.Left % TileSize;
@@ -198,6 +201,7 @@ namespace WindowSnap
                             .Translate(-ClientOffsetX, -ClientOffsetY)
                             .Translate(-clientSnapRect.Left, -clientSnapRect.Top);
                     }
+                    Log($"GridSnap");
                     if (msg == WM.MOVING)
                     {
                         Marshal.StructureToPtr(windowRect, lParam, false);
@@ -214,28 +218,37 @@ namespace WindowSnap
                     UpdateScreenSnapRect();
                     if (msg == WM.EXITSIZEMOVE)
                     {
+                        Log(SharedMemory.PageTable.Aggregate("", (a, b) => $"{a}{b} "));
                         // Notify all attached windows
                         foreach (var remotePID in
                             SharedMemory.Self.ReadArray<int>(Address.AttachedWindowPIDs, AttachedWindowPIDsCapacity)
                             .Where(pid => pid > 0))
                         {
                             var remotePage = SharedMemory.GetPageByPID(remotePID);
-                            remotePage.Write(Address.DetachmentChanged, true);
-                            remotePage.Write(Address.MessageParam2, PID);
-                            remotePage.Flush();
-                            OnDetached?.Invoke(remotePID);
-                            Log($"Detached({remotePID})");
+                            if (remotePage != null)
+                            {
+                                remotePage.Write(Address.DetachmentChanged, true);
+                                remotePage.Write(Address.MessageParam2, PID);
+                                remotePage.Flush();
+                                OnDetached?.Invoke(remotePID);
+                                Log($"Detached({remotePID})");
+                            }
                         }
+                        Log($"Notify other windows");
                         // Clear attached windows list
                         var newAttachedWindowPIDs = new int[AttachedWindowPIDsCapacity];
                         SharedMemory.Self.WriteArray(
                             Address.AttachedWindowPIDs,
                             newAttachedWindowPIDs, 0, AttachedWindowPIDsCapacity);
                         SharedMemory.Self.Flush();
+                        Log($"Clear attached windows list");
 
                         if (attachedWindowPID > 0)
                         {
                             var attachedWindowPage = SharedMemory.GetPageByPID(attachedWindowPID);
+                            if (attachedWindowPage == null) {
+                            Log($"Fatal: page table corrupted");
+                            }
                             attachedWindowPage.Write(Address.AttachmentChanged, true);
                             attachedWindowPage.Write(Address.MessageParam1, PID);
                             attachedWindowPage.Flush();
@@ -298,7 +311,7 @@ namespace WindowSnap
         public static Vec2 GetRelativePos(int pid)
         {
             var page = SharedMemory.GetPageByPID(pid);
-            return new Vec2(
+            return page == null ? new Vec2() : new Vec2(
                 page.ReadInt32(Address.ScreenSnapRectX) - GetScreenSnapRect().Left,
                 page.ReadInt32(Address.ScreenSnapRectY) - GetScreenSnapRect().Top);
         }

@@ -17,7 +17,7 @@ namespace WindowSnap
             {
                 var runningPIDs =
                     Process.GetProcessesByName(Process.GetCurrentProcess().ProcessName).Select(p => p.Id);
-                return pageTable
+                return PageTable
                     .Select((pid, index) => new { pid, index })
                     .Where(o => runningPIDs.Contains(o.pid) && o.index != selfIndex && o.index != 0)
                     .Select(o => GetPage(o.index))
@@ -25,7 +25,7 @@ namespace WindowSnap
             }
         }
         internal static int selfIndex;
-        static int[] pageTable => page0.ReadArray<int>(0, PageCount);
+        public static int[] PageTable => page0.ReadArray<int>(0, PageCount);
         static MemoryMappedFile mmf =
             MemoryMappedFile.CreateOrOpen("GameWindowsLoop", PageSize * PageCount);
         static MemoryMappedViewAccessor page0 = mmf.CreateViewAccessor(0, PageSize);
@@ -44,13 +44,13 @@ namespace WindowSnap
             index >= 0 && index < PageCount ? mmf.CreateViewAccessor(index * PageSize, PageSize) : null;
 
         public static MemoryMappedViewAccessor GetPageByPID(int pid) =>
-            Array.IndexOf(pageTable, pid) is var index && index >= 0
+            Array.IndexOf(PageTable, pid) is var index && index >= 0
             ? GetPage(index)
             : null;
 
         static int AllocatePage()
         {
-            var pageTable = SharedMemory.pageTable;
+            var pageTable = SharedMemory.PageTable;
             var runningPIDs = new HashSet<int>(
                 Process.GetProcessesByName(Process.GetCurrentProcess().ProcessName).Select(p => p.Id));
             Snapper.Log($"Processes: {runningPIDs.Count}");
@@ -60,7 +60,7 @@ namespace WindowSnap
                 {
                     page0.Write(i * sizeof(int), Process.GetCurrentProcess().Id);
                     page0.Flush();
-                    Snapper.Log(SharedMemory.pageTable.Aggregate("", (a, b) => $"{a}{b} "));
+                    Snapper.Log(SharedMemory.PageTable.Aggregate("", (a, b) => $"{a}{b} "));
                     return i;
                 }
             }
