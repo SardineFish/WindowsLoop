@@ -67,6 +67,27 @@ public class SceneLoader : Singleton<SceneLoader>
                 }
             case 5:
                 {
+                    LoadScene("Level-2", 6);
+                    break;
+                }
+            case 6:
+                {
+                    GamePass(7);
+                    break;
+                }
+            case 7:
+                {
+                    LoadScene("Level-3", 8);
+                        break;
+                }
+            case 8:
+                {
+                    GamePass(9);
+                    break;
+                }
+            case 9:
+                {
+                    LoadScene("Staff", 10);
                     break;
                 }
 

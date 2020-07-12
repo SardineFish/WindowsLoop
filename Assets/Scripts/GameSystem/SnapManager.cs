@@ -304,7 +304,10 @@ public class SnapManager : Singleton<SnapManager>
             var viewportRect = CameraManager.Instance.ViewportTileRect;
             var pos = GameSystem.Instance.Player.transform.position.ToVector2();
             var viewportTilePos = GameSystem.Instance.Player.transform.position - viewportRect.min.ToVector3();
-            if(! viewportRect.Contains(pos))
+            var largeViewportRect = viewportRect;
+            largeViewportRect.min = viewportRect.min - Vector2Int.one;
+            largeViewportRect.max = viewportRect.max + Vector2Int.one;
+            if(!largeViewportRect.Contains(pos))
             {
                 var relativePos = pos - viewportRect.min;
 
