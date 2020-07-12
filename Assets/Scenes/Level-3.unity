@@ -10186,7 +10186,7 @@ MonoBehaviour:
   BaseMap: {fileID: 3298174670532116336}
   RuntimeMap: {fileID: 0}
   AttachMap: {fileID: 0}
-  BackgroundMap: {fileID: 0}
+  BackgroundMap: {fileID: 568952760}
   RuntimeBackgroundMap: {fileID: 0}
   LoopArea:
     x: -12
