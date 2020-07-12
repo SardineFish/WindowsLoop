@@ -17,8 +17,10 @@ public class AudioManager : Singleton<AudioManager>
 
     bool walking = false;
 
-    private void Awake()
+    protected override void Awake()
     {
+        base.Awake();
+
         System.Environment.GetCommandLineArgs().ForEach(t => Debug.Log(t));
     }
 
@@ -38,7 +40,7 @@ public class AudioManager : Singleton<AudioManager>
             WalkAudioSource.Play();
         }
         if (IsAudioHost)
-            GameSystem.Instance.StartCoroutine(CloseCheck());
+            SceneLoader.Instance.StartCoroutine(CloseCheck());
     }
 
     // Update is called once per frame
