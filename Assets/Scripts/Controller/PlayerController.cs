@@ -104,14 +104,25 @@ public class PlayerController : MonoBehaviour
         {
             if (contact.normal.y > 0.5f && Mathf.Abs(contact.point.y - footheight) < 0.1f)
             {
-                onGround = true;
-                onGroundCache.Renew(Time.time);
+                Land();
             }
             if (Mathf.Abs(contact.normal.y) > 0.5f)
                 velocity.y = 0;
             Debug.DrawLine(contact.point, contact.point + contact.normal, Color.red);
 
         }
+    }
+
+    void Land()
+    {
+        if(EnableControl)
+        {
+            if (!onGroundCache)
+                AudioManager.Instance.Land();
+        }
+
+        onGround = true;
+        onGroundCache.Renew(Time.time);
     }
 
     // Update is called once per frame
@@ -157,6 +168,15 @@ public class PlayerController : MonoBehaviour
             renderer.flipX = true;
         else if(rawMovementInput.x > 0)
             renderer.flipX = false;
+
+        if(EnableControl && onGround && Mathf.Abs(rigidbody.velocity.x) > 0.01f)
+        {
+            AudioManager.Instance.Walking(true);
+        }
+        else
+        {
+            AudioManager.Instance.Walking(false);
+        }
     }
 
     private void LateUpdate()
@@ -173,7 +193,13 @@ public class PlayerController : MonoBehaviour
     public void Jump()
     {
         if (onGroundCache)
+        {
             velocity.y = jumpVelocity;
+            if(EnableControl)
+            {
+                AudioManager.Instance.Jump();
+            }
+        }
         onGround = false;
         onGroundCache.Clear();
     }
@@ -185,6 +211,7 @@ public class PlayerController : MonoBehaviour
 
             return;
         }
+
         if (jumpCache.Value)
             Jump();
 
