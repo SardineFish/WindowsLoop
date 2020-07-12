@@ -25,6 +25,7 @@ public class SnapManager : Singleton<SnapManager>
             EnableSnap = false;
             return;
         }
+
         Snapper.OnAttached += Snapper_OnAttached;
         Snapper.OnDetached += Snapper_OnDetached;
         Snapper.SnapWhileMoving = false;

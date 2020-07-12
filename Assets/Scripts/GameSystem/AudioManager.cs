@@ -37,12 +37,23 @@ public class AudioManager : Singleton<AudioManager>
             WalkAudioSource.volume = 0;
             WalkAudioSource.Play();
         }
+        if (IsAudioHost)
+            GameSystem.Instance.StartCoroutine(CloseCheck());
     }
 
     // Update is called once per frame
     void Update()
     {
-
+    }
+    IEnumerator CloseCheck()
+    {
+        while(true)
+        {
+            
+            if (System.Diagnostics.Process.GetProcessesByName(System.Diagnostics.Process.GetCurrentProcess().ProcessName).Length <= 1)
+                Application.Quit();
+            yield return new WaitForSeconds(1);
+        }
     }
 
     IEnumerator Mute(AudioSource source, float time)
