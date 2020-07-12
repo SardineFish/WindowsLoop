@@ -10,6 +10,8 @@ public class AttachedInstanceData
 {
     public int PID;
     public RectInt TileRange;
+    public RectInt ViewportTileRect;
+    public RectInt RelativeTileRect;
     public int[,] TileData;
     public Vector2Int AttachPoint;
     public RectInt SyncTilesArea;
@@ -20,9 +22,9 @@ public class AttachedInstanceData
         var basePos = new Vector2Int(
             GameMap.FloorReminder(pos.x, TileRange.size.x),
             GameMap.FloorReminder(pos.y, TileRange.size.y));
-        var instanceID = TileData[basePos.x, basePos.y];
-        if (AssetManager.Instance.Assets.ContainsKey(instanceID))
-            return AssetManager.Instance.Assets[instanceID] as TileBase;
+        var assetID = TileData[basePos.x, basePos.y];
+        if (AssetManager.Instance.Assets.ContainsKey(assetID))
+            return AssetManager.Instance.Assets[assetID] as TileBase;
         return null;
     }
 }

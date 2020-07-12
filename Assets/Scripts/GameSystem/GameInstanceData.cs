@@ -129,7 +129,7 @@ public struct GameInstanceData
         var range = TileRange;
         var data = new int[range.size.x, range.size.y];
         var expand = page.ReadArray<int>(GameDataAddr.TileData, data.Length);
-        Buffer.BlockCopy(expand, 0, data, 0, data.Length);
+        Buffer.BlockCopy(expand, 0, data, 0, data.Length * sizeof(int));
 
         return data;
     }
@@ -137,7 +137,7 @@ public struct GameInstanceData
     public void WriteTileData(int [,] data)
     {
         var expand = new int[data.Length];
-        Buffer.BlockCopy(data, 0, expand, 0, data.Length);
+        Buffer.BlockCopy(data, 0, expand, 0, data.Length * sizeof(int));
         page.WriteArray(GameDataAddr.TileData, expand, 0, data.Length);
 
     }

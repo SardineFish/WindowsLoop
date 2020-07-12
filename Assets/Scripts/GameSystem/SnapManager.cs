@@ -63,11 +63,13 @@ public class SnapManager : Singleton<SnapManager>
             var data = GetGameData(pid);
             if(data.Valid)
             {
+                var relativeRect = data.ViewRect;
                 var tileData = new AttachedInstanceData()
                 {
                     PID = pid,
                     TileRange = data.TileRange,
-                    TileData = data.ReadTileData()
+                    TileData = data.ReadTileData(),
+                    ViewportTileRect = data.ViewRect,
                 };
                 AttachedData[pid] = tileData;
             }
@@ -78,7 +80,13 @@ public class SnapManager : Singleton<SnapManager>
             var attachedData = AttachedData[pid];
             attachedData.AttachPoint = posInt;
             attachedData.AttachPoint.y = -posInt.y;
-            var viewportBlocks = CameraManager.Instance.SnapRect;
+
+            RectInt relativeViewRect = new RectInt();
+            relativeViewRect.min = attachedData.AttachPoint;
+            relativeViewRect.max = attachedData.AttachPoint + attachedData.ViewportTileRect.size;
+            attachedData.RelativeTileRect = relativeViewRect;
+
+            var viewportBlocks = CameraManager.Instance.ViewportTileRect;
 
             RectInt syncRange = new RectInt();
             if (posInt.x == -viewportBlocks.size.x) // snap to left
@@ -165,10 +173,10 @@ public class SnapManager : Singleton<SnapManager>
                 var tile = tilemap.GetBaseTileAt(pos);
                 if (tile)
                 {
-                    tiles[x, y] = tile.GetInstanceID();
+                    tiles[x, y] = AssetManager.Instance.GetID(tile);
                 }
                 else
-                    tiles[x, y] = 0;
+                    tiles[x, y] = -1;
             }
         }
         SelfData.TileRange = rect;
@@ -188,7 +196,7 @@ public class SnapManager : Singleton<SnapManager>
 
         SelfData.PlayerPosition = GameSystem.Instance.Player.transform.position;
         SelfData.PlayerVelocity = GameSystem.Instance.Player.rigidbody.velocity;
-        SelfData.ViewRect = CameraManager.Instance.SnapRect;
+        SelfData.ViewRect = CameraManager.Instance.ViewportTileRect;
         SelfData.Flush();
 
         bool shouldUpdateConnection = true;
@@ -240,7 +248,6 @@ public class SnapManager : Singleton<SnapManager>
                 SelfData.TileOffsetToActiveInstance = instanceData.TileOffsetToActiveInstance + offset;
             }
         }
-
     }
 
     private void LateUpdate()
@@ -249,6 +256,37 @@ public class SnapManager : Singleton<SnapManager>
         {
             GameSystem.Instance.Player.gameObject.SetActive(true);
             GameSystem.Instance.Player.EnableControl = true;
+
+            var viewportRect = CameraManager.Instance.ViewportTileRect;
+            var pos = GameSystem.Instance.Player.transform.position.ToVector2();
+            var viewportTilePos = GameSystem.Instance.Player.transform.position - viewportRect.min.ToVector3();
+            if(! viewportRect.Contains(pos))
+            {
+                var relativePos = pos - viewportRect.min;
+
+                var nextActive = AttachedData
+                    .Where(attachedData => attachedData.Value.RelativeTileRect.Contains(relativePos))
+                    .Select(p => p.Value)
+                    .FirstOrDefault();
+
+                if(nextActive is null)
+                    Debug.LogError($"Missing attached instance contains {pos}");
+                else
+                {
+                    var instanceData = GetGameData(nextActive.PID);
+
+                    instanceData.IsActiveInstance = true;
+                    instanceData.Flush();
+
+                    PublicData.ActiveInstancePID = nextActive.PID;
+                    PublicData.Flush();
+
+                    SelfData.IsActiveInstance = false;
+                    SelfData.Flush();
+
+                }
+
+            }
         }
         else if(SelfData.ConnectActiveThrough != 0)
         {
@@ -261,7 +299,7 @@ public class SnapManager : Singleton<SnapManager>
 
             pos -= activeInstance.ViewRect.min;
             pos -= SelfData.TileOffsetToActiveInstance;
-            pos += CameraManager.Instance.SnapRect.min;
+            pos += CameraManager.Instance.ViewportTileRect.min;
 
             SelfData.PlayerPosition = pos;
             SelfData.PlayerVelocity = velocity;

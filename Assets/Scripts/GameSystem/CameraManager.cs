@@ -42,7 +42,7 @@ public class CameraManager : Singleton<CameraManager>
         }
     }
 
-    public RectInt SnapRect
+    public RectInt ViewportTileRect
     {
         get
         {
@@ -110,7 +110,7 @@ public class CameraManager : Singleton<CameraManager>
 
     private void OnDrawGizmos()
     {
-        var rect = SnapRect;
+        var rect = ViewportTileRect;
         Gizmos.color = Color.cyan;
         Gizmos.DrawWireCube(rect.center.ToVector3(), rect.size.ToVector3());
     }

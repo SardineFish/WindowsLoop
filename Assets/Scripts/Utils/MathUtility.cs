@@ -87,6 +87,13 @@ public static class MathUtility
     public static Vector2Int Max(Vector2Int a, Vector2Int b)
         => new Vector2Int(Mathf.Max(a.x, b.x), Mathf.Max(a.y, b.y));
 
+    public static bool Contains(this RectInt rect, Vector2 pos)
+    {
+        if (pos.x >= rect.xMin && pos.y >= rect.yMin && pos.x < rect.xMax && pos.y < rect.yMax)
+            return true;
+        return false;
+    }
+
     public static Color Set(this Color color, float r = float.NaN, float g=float.NaN, float b=float.NaN, float a = float.NaN)
     {
         color.r = float.IsNaN(r) ? color.r : r;
