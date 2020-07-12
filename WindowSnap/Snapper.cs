@@ -261,6 +261,19 @@ namespace WindowSnap
         }
         public static void TickPerFrame()
         {
+            if (SharedMemory.Self.ReadBoolean(Address.DetachmentChanged))
+            {
+                SharedMemory.Self.Write(Address.DetachmentChanged, false);
+                SharedMemory.Self.Flush();
+                var remotePID = SharedMemory.Self.ReadInt32(Address.MessageParam2);
+                var attachedWindowPIDs =
+                    SharedMemory.Self.ReadArray<int>(Address.AttachedWindowPIDs, AttachedWindowPIDsCapacity);
+                attachedWindowPIDs.Unset(remotePID);
+                SharedMemory.Self.WriteArray(Address.AttachedWindowPIDs, attachedWindowPIDs, 0, AttachedWindowPIDsCapacity);
+                SharedMemory.Self.Flush();
+                OnDetached?.Invoke(remotePID);
+                Log($"Detached({remotePID})");
+            }
             if (SharedMemory.Self.ReadBoolean(Address.AttachmentChanged))
             {
                 SharedMemory.Self.Write(Address.AttachmentChanged, false);
@@ -274,19 +287,6 @@ namespace WindowSnap
                 SharedMemory.Self.Flush();
                 OnAttached?.Invoke(remotePID, relativePosition);
                 Log($"Attached({remotePID}, [{relativePosition.X}, {relativePosition.Y}])");
-            }
-            if (SharedMemory.Self.ReadBoolean(Address.DetachmentChanged))
-            {
-                SharedMemory.Self.Write(Address.DetachmentChanged, false);
-                SharedMemory.Self.Flush();
-                var remotePID = SharedMemory.Self.ReadInt32(Address.MessageParam2);
-                var attachedWindowPIDs =
-                    SharedMemory.Self.ReadArray<int>(Address.AttachedWindowPIDs, AttachedWindowPIDsCapacity);
-                attachedWindowPIDs.Unset(remotePID);
-                SharedMemory.Self.WriteArray(Address.AttachedWindowPIDs, attachedWindowPIDs, 0, AttachedWindowPIDsCapacity);
-                SharedMemory.Self.Flush();
-                OnDetached?.Invoke(remotePID);
-                Log($"Detached({remotePID})");
             }
         }
 
