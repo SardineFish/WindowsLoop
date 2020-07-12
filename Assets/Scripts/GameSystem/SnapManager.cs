@@ -9,16 +9,27 @@ public class SnapManager : Singleton<SnapManager>
 
     public GameInstanceData GetGameData(int pid) => new GameInstanceData(SharedMemory.GetPageByPID(pid));
     GameInstanceData SelfData;
-    public int PID { get; private set; }
+    int PID { get; set; }
     Dictionary<int, AttachedInstanceData> AttachedData = new Dictionary<int, AttachedInstanceData>();
     public HashSet<int> AttachedInstances = new HashSet<int>();
 
     bool isPreviousActive = false;
 
     bool EnableSnap = true;
-    private void Awake()
+    protected override void Awake()
     {
-        if(AudioManager.Instance.IsAudioHost)
+        base.Awake();
+        if (Instance && Instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        Snapper.OnAttached += Snapper_OnAttached;
+        Snapper.OnDetached += Snapper_OnDetached;
+
+
+        if (AudioManager.Instance.IsAudioHost)
         {
             GameSystem.Instance.Player.EnableControl = false;
             GameSystem.Instance.Player.gameObject.SetActive(false);
@@ -26,14 +37,6 @@ public class SnapManager : Singleton<SnapManager>
             return;
         }
 
-        Snapper.OnAttached += Snapper_OnAttached;
-        Snapper.OnDetached += Snapper_OnDetached;
-        Snapper.SnapWhileMoving = false;
-        Snapper.SetLogCallback(msg =>
-        {
-            Debug.LogError(msg);
-        });
-        Snapper.Init();
 
         SelfData = new GameInstanceData(SharedMemory.Self);
 
@@ -41,8 +44,7 @@ public class SnapManager : Singleton<SnapManager>
         {
             SelfData.IsActiveInstance = true;
 
-            PublicData.ActiveInstancePID = Snapper.PID;
-            PublicData.Flush();
+           
         }
         else
         {
@@ -55,14 +57,7 @@ public class SnapManager : Singleton<SnapManager>
 
         PID = Snapper.PID;
 
-        if (SharedMemory.Others.Count == 0 && !Application.isEditor)
-        {
-
-            var path = System.Environment.GetCommandLineArgs()[0];
-            System.Diagnostics.Process.Start(path, "-batchmode -nographics -audiohost");
-
-            //System.Diagnostics.Process.Start(System.Environment.);
-        }
+        
 
     }
 
@@ -222,7 +217,9 @@ public class SnapManager : Singleton<SnapManager>
     void Update()
     {
         if (!EnableSnap)
+        {
             return;
+        }
 
         Snapper.TickPerFrame();
 
