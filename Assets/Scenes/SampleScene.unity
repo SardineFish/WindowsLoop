@@ -180,6 +180,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   BaseMap: {fileID: 1941844161}
   RuntimeMap: {fileID: 0}
+  AttachMap: {fileID: 0}
   LoopArea:
     x: -12
     y: -8

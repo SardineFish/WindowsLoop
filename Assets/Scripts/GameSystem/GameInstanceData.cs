@@ -83,6 +83,18 @@ public struct GameInstanceData
         }
     }
 
+    public int ConnectActiveThrough
+    {
+        get => page.ReadInt32(GameDataAddr.ConnectToActiveThrough);
+        set => page.Write(GameDataAddr.ConnectToActiveThrough, value);
+    }
+
+    public Vector2Int TileOffsetToActiveInstance
+    {
+        get => ReadVector2Int(GameDataAddr.TileOffsetToActiveInstance);
+        set => WriteVector2Int(GameDataAddr.TileOffsetToActiveInstance, value);
+    }
+
 
     private void WriteVector2(long addr, Vector2 v)
     {
@@ -152,15 +164,17 @@ public static class PublicData
 
 public class GameDataAddr : WindowSnap.Address
 {
-    public const int ViewRectMin =      Preserve + 0x0;
-    public const int ViewRectMax =      Preserve + 0x8;
-    public const int PlayerPosition =   Preserve + 0x10;
-    public const int PlayerVelocity =   Preserve + 0x18;
-    public const int PlayerAnimTime =   Preserve + 0x20;
-    public const int CameraPos =        Preserve + 0x24;
-    public const int ActiveInstance =   Preserve + 0x2c;
-    public const int TileRangeMin =     Preserve + 0x30;
-    public const int TileRangeMax =     Preserve + 0x38;
+    public const int ViewRectMin =      Preserve + 0x0;     // int2
+    public const int ViewRectMax =      Preserve + 0x8;     // int2
+    public const int PlayerPosition =   Preserve + 0x10;    // float2
+    public const int PlayerVelocity =   Preserve + 0x18;    // float2
+    public const int PlayerAnimTime =   Preserve + 0x20;    // float
+    public const int CameraPos =        Preserve + 0x24;    // float2
+    public const int ActiveInstance =   Preserve + 0x2c;    // bool
+    public const int TileRangeMin =     Preserve + 0x30;    // int2
+    public const int TileRangeMax =     Preserve + 0x38;    // int2
+    public const int ConnectToActiveThrough =       Preserve + 0x40; // int
+    public const int TileOffsetToActiveInstance =   Preserve + 0x44; // int2
 
     public const int TileData =         Preserve + 0x100;
 }

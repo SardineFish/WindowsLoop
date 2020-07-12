@@ -166,7 +166,7 @@ public class PlayerController : MonoBehaviour
 
     public void SetPositionVelocity(Vector2 pos, Vector2 velocity)
     {
-        rigidbody.MovePosition(pos);
+        transform.position = pos.ToVector3(transform.position.z);
         rigidbody.velocity = velocity;
     }
 

@@ -9,7 +9,9 @@ public class SnapManager : Singleton<SnapManager>
 
     public GameInstanceData GetGameData(int pid) => new GameInstanceData(SharedMemory.GetPageByPID(pid));
     GameInstanceData SelfData;
-    Dictionary<int, AttachedInstanceData> GameInstanceMapData = new Dictionary<int, AttachedInstanceData>();
+    public int PID { get; private set; }
+    Dictionary<int, AttachedInstanceData> AttachedData = new Dictionary<int, AttachedInstanceData>();
+    public HashSet<int> AttachedInstances = new HashSet<int>();
     private void Awake()
     {
         Snapper.OnAttached += Snapper_OnAttached;
@@ -39,18 +41,24 @@ public class SnapManager : Singleton<SnapManager>
         WriteTileData();
         SelfData.Flush();
 
+        PID = Snapper.PID;
+
     }
 
-    private void Snapper_OnDetached(int obj)
+    private void Snapper_OnDetached(int pid)
     {
-
+        AttachedInstances.Remove(pid);
+        if(AttachedInstances.Count == 0 && PublicData.ActiveInstancePID == Snapper.PID)
+        {
+            CameraManager.Instance.StartMotion();
+        }
     }
 
     private void Snapper_OnAttached(int pid, Vec2 relativePos)
     {
         Vector2Int posInt = new Vector2Int(Mathf.RoundToInt(relativePos.X / 40), Mathf.RoundToInt(relativePos.Y / 40));
 
-        if (!GameInstanceMapData.ContainsKey(pid))
+        if (!AttachedData.ContainsKey(pid))
         {
             var data = GetGameData(pid);
             if(data.Valid)
@@ -61,13 +69,13 @@ public class SnapManager : Singleton<SnapManager>
                     TileRange = data.TileRange,
                     TileData = data.ReadTileData()
                 };
-                GameInstanceMapData[pid] = tileData;
+                AttachedData[pid] = tileData;
             }
         }
-        if(GameInstanceMapData.ContainsKey(pid))
+        if(AttachedData.ContainsKey(pid))
         {
             var instanceData = GetGameData(pid);
-            var attachedData = GameInstanceMapData[pid];
+            var attachedData = AttachedData[pid];
             attachedData.AttachPoint = posInt;
             attachedData.AttachPoint.y = -posInt.y;
             var viewportBlocks = CameraManager.Instance.SnapRect;
@@ -123,6 +131,18 @@ public class SnapManager : Singleton<SnapManager>
                     GameMap.Instance.SetAttachedTile(new Vector2Int(x, y), tile);
                 }
             }
+
+            AttachedInstances.Add(pid);
+            if(PublicData.ActiveInstancePID == pid)
+            {
+                SelfData.ConnectActiveThrough = pid;
+            }
+            else if(instanceData.ConnectActiveThrough != 0)
+            {
+                SelfData.ConnectActiveThrough = pid;
+            }
+            SelfData.Flush();
+
             Debug.LogError($"{syncRange.min - viewportBlocks.min}, {syncRange.max - viewportBlocks.min}");
         }
 
@@ -169,24 +189,79 @@ public class SnapManager : Singleton<SnapManager>
         SelfData.PlayerPosition = GameSystem.Instance.Player.transform.position;
         SelfData.PlayerVelocity = GameSystem.Instance.Player.rigidbody.velocity;
         SelfData.ViewRect = CameraManager.Instance.SnapRect;
-
         SelfData.Flush();
+
+        bool shouldUpdateConnection = true;
+        var connectActiveInstanceThrough = SelfData.ConnectActiveThrough;
+        if (connectActiveInstanceThrough != 0 && AttachedInstances.Contains(connectActiveInstanceThrough))
+        {
+            var instanceData = GetGameData(connectActiveInstanceThrough);
+            if(instanceData.ConnectActiveThrough != 0 || PublicData.ActiveInstancePID == connectActiveInstanceThrough)
+            {
+                shouldUpdateConnection = false;
+            }
+        }
+
+        // Update connection to active instance by searching all attached instance
+        // Thees values will propergate to all attached game instance.
+        if (shouldUpdateConnection)
+        {
+            var activePID = PublicData.ActiveInstancePID;
+            SelfData.ConnectActiveThrough = 0;
+
+            foreach (var attached in AttachedInstances)
+            {
+                var instanceData = GetGameData(attached);
+                if (attached == activePID)
+                {
+                    SelfData.ConnectActiveThrough = attached;
+                    break;
+                }
+                else if(instanceData.ConnectActiveThrough != 0 && instanceData.ConnectActiveThrough != PID)
+                {
+                    SelfData.ConnectActiveThrough = attached;
+                    break;
+                }
+            }
+        }
+        SelfData.Flush();
+
+        var connectThrough = SelfData.ConnectActiveThrough;
+        if (connectThrough != 0)
+        {
+            var instanceData = GetGameData(connectThrough);
+            var offset = -AttachedData[connectThrough].AttachPoint;
+            if(connectThrough == PublicData.ActiveInstancePID)
+            {
+                SelfData.TileOffsetToActiveInstance = offset;
+            }
+            else
+            {
+                SelfData.TileOffsetToActiveInstance = instanceData.TileOffsetToActiveInstance + offset;
+            }
+        }
+
     }
 
     private void LateUpdate()
     {
         if(SelfData.IsActiveInstance)
         {
+            GameSystem.Instance.Player.gameObject.SetActive(true);
             GameSystem.Instance.Player.EnableControl = true;
         }
-        
-        else
+        else if(SelfData.ConnectActiveThrough != 0)
         {
+            GameSystem.Instance.Player.gameObject.SetActive(true);
             var activePID = PublicData.ActiveInstancePID;
             var activeInstance = GetGameData(activePID);
 
             var pos = activeInstance.PlayerPosition;
             var velocity = activeInstance.PlayerVelocity;
+
+            pos -= activeInstance.ViewRect.min;
+            pos -= SelfData.TileOffsetToActiveInstance;
+            pos += CameraManager.Instance.SnapRect.min;
 
             SelfData.PlayerPosition = pos;
             SelfData.PlayerVelocity = velocity;
@@ -195,6 +270,10 @@ public class SnapManager : Singleton<SnapManager>
             GameSystem.Instance.Player.SetPositionVelocity(pos, velocity);
 
             //Debug.LogError($"Sync from active instance {activePID}");
+        }
+        else
+        {
+            GameSystem.Instance.Player.gameObject.SetActive(false);
         }
     }
 }
