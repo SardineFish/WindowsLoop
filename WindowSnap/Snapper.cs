@@ -52,14 +52,17 @@ namespace WindowSnap
                 }
                 return true;
             }, IntPtr.Zero);
-            GetWindowRect(hWnd, out var windowRect);
-            GetClientScreenRect(hWnd, out var clientRect);
-            WindowWidth = windowRect.Width;
-            WindowHeight = windowRect.Height;
-            ClientOffsetX = clientRect.Left - windowRect.Left;
-            ClientOffsetY = clientRect.Top - windowRect.Top;
-            wndProcDelegate = new WndProc(WndProc);
-            originalWndProcPtr = SetWindowLongPtr(hWnd, -4, Marshal.GetFunctionPointerForDelegate(wndProcDelegate));
+            if (hWnd != IntPtr.Zero)
+            {
+                GetWindowRect(hWnd, out var windowRect);
+                GetClientScreenRect(hWnd, out var clientRect);
+                WindowWidth = windowRect.Width;
+                WindowHeight = windowRect.Height;
+                ClientOffsetX = clientRect.Left - windowRect.Left;
+                ClientOffsetY = clientRect.Top - windowRect.Top;
+                wndProcDelegate = new WndProc(WndProc);
+                originalWndProcPtr = SetWindowLongPtr(hWnd, -4, Marshal.GetFunctionPointerForDelegate(wndProcDelegate));
+            }
         }
 
         public static void Init()
@@ -110,6 +113,7 @@ namespace WindowSnap
             return delta <= SnapThreshold;
         }
 
+        // FIXIT: start a drag before load this WndProc will cause a NullReferenceException
         static List<MemoryMappedViewAccessor> otherPages;
         static IntPtr WndProc(IntPtr hWnd, WM msg, IntPtr wParam, IntPtr lParam)
         {
