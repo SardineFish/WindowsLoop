@@ -298,6 +298,7 @@ public class SnapManager : Singleton<SnapManager>
             {
                 var player = GameSystem.Instance.Player;
                 player.gameObject.SetActive(true);
+                player.rigidbody.bodyType = RigidbodyType2D.Dynamic;
                 player.EnableControl = true;
                 player.rigidbody.MovePosition(player.transform.position.ToVector2() + Vector2.up * 0.005f);
                 isPreviousActive = true;
