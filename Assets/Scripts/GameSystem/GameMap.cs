@@ -22,7 +22,12 @@ public class GameMap : Singleton<GameMap>
         RuntimeBackgroundMap = CreateTilemapLayer("RuntimeBackGround", false);
         RuntimeBackgroundMap.transform.Translate(new Vector3(0, 0, 10));
         BaseMap.gameObject.SetActive(false);
+
+
+        if (!BackgroundMap)
+            BackgroundMap = CreateTilemapLayer("Background", false);
         BackgroundMap.gameObject.SetActive(false);
+
     }
 
     Tilemap CreateTilemapLayer(string name, bool enableCollider = true)
@@ -143,7 +148,10 @@ public class GameMap : Singleton<GameMap>
     }
 
     void RemoveRuntimeTileAt(int x, int y)
-        => RuntimeMap.SetTile(new Vector3Int(x, y, 0), null);
+    {
+        RuntimeMap.SetTile(new Vector3Int(x, y, 0), null);
+        RuntimeBackgroundMap.SetTile(new Vector3Int(x, y, 0), null);
+    }
 
     public static int FloorReminder(int x, int m) =>
         x >= 0
