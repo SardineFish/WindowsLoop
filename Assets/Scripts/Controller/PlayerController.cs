@@ -106,7 +106,7 @@ public class PlayerController : MonoBehaviour
             {
                 Land();
             }
-            if (Mathf.Abs(contact.normal.y) > 0.5f)
+            if (Mathf.Abs(contact.normal.y) > 0.2f)
                 velocity.y = 0;
             Debug.DrawLine(contact.point, contact.point + contact.normal, Color.red);
 
