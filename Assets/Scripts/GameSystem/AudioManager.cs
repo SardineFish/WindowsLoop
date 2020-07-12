@@ -8,6 +8,7 @@ public class AudioManager : Singleton<AudioManager>
     public AudioClip FootstepSFX;
     public AudioClip JumpSFX;
     public AudioClip LandSFX;
+    public AudioClip GemSFX;
 
     public bool IsAudioHost => System.Environment.GetCommandLineArgs().Any(arg => arg == "-audiohost");
 
@@ -17,8 +18,10 @@ public class AudioManager : Singleton<AudioManager>
 
     bool walking = false;
 
-    private void Awake()
+    protected override void Awake()
     {
+        base.Awake();
+
         System.Environment.GetCommandLineArgs().ForEach(t => Debug.Log(t));
     }
 
@@ -38,7 +41,7 @@ public class AudioManager : Singleton<AudioManager>
             WalkAudioSource.Play();
         }
         if (IsAudioHost)
-            GameSystem.Instance.StartCoroutine(CloseCheck());
+            SceneLoader.Instance.StartCoroutine(CloseCheck());
     }
 
     // Update is called once per frame
@@ -95,5 +98,10 @@ public class AudioManager : Singleton<AudioManager>
     public void Land()
     {
         SFXAudioSource.PlayOneShot(LandSFX);
+    }
+
+    public void GetGem()
+    {
+        SFXAudioSource.PlayOneShot(GemSFX);
     }
 }

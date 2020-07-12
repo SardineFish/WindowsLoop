@@ -176,7 +176,12 @@ public static class PublicData
         set => page.Write(PublicDataAddr.IsLanded, true);
     }
 
-   
+    public static int LevelState
+    {
+        get => page.ReadInt32(PublicDataAddr.LevelState);
+        set => page.Write(PublicDataAddr.LevelState, value);
+    }
+
     
 
     public static void Flush() => page.Flush();
@@ -207,4 +212,5 @@ public class PublicDataAddr
     public const int IsWalking = UserData + 0x4; // bool
     public const int IsJumped = UserData + 0x8; // bool
     public const int IsLanded = UserData + 0xc; // bool
+    public const int LevelState = UserData + 0x10; // int
 }

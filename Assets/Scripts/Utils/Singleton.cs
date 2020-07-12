@@ -29,10 +29,10 @@ public class Singleton<T> : UnityEngine.MonoBehaviour where T:Singleton<T>
         instance = this as T;
     }
 
-    void Awake()
+    protected virtual void Awake()
     {
         DontDestroyOnLoad(gameObject);
-        return;
+
         if (instance && instance != this)
         {
             Destroy(gameObject);
@@ -40,7 +40,6 @@ public class Singleton<T> : UnityEngine.MonoBehaviour where T:Singleton<T>
         else if(!instance)
         {
             instance = this as T;
-            DontDestroyOnLoad(gameObject);
         }
 
     }

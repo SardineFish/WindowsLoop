@@ -157,6 +157,11 @@ public class PlayerController : MonoBehaviour
                 movement += Vector2.down;
             if (Input.GetKey(KeyCode.Space))
                 jumpCache.Renew(Time.time);
+            if(Input.GetKey(KeyCode.LeftShift) && Input.GetKeyDown(KeyCode.Space))
+            {
+                onGroundCache.Renew(Time.time);
+                jumpCache.Renew(Time.time);
+            }
         }
         rawMovementInput = movement;
         jumpCache.CacheTime = m_JumpCacheTime;
