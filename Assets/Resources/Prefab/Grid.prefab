@@ -2151,8 +2151,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: da3c177e5260e13478f1c1837c27b47e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  BlankTile: {fileID: 11400000, guid: 93c65c205ec10db40b067cefd241b629, type: 2}
   BaseMap: {fileID: 5259209790393421497}
   RuntimeMap: {fileID: 0}
+  AttachMap: {fileID: 0}
   LoopArea:
     x: -12
     y: -8

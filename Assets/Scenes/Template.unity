@@ -7685,6 +7685,11 @@ PrefabInstance:
       propertyPath: m_LocalPosition.y
       value: -1.1687129
       objectReference: {fileID: 0}
+    - target: {fileID: 5411392726488537142, guid: 5fc48d04db28e7d49b6ec27adf886c70,
+        type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -1.1687129
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 5fc48d04db28e7d49b6ec27adf886c70, type: 3}
 --- !u!156049354 &3298174668888773408
@@ -7729,8 +7734,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: da3c177e5260e13478f1c1837c27b47e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  BlankTile: {fileID: 11400000, guid: 93c65c205ec10db40b067cefd241b629, type: 2}
   BaseMap: {fileID: 3298174670532116336}
   RuntimeMap: {fileID: 0}
+  AttachMap: {fileID: 0}
   LoopArea:
     x: -12
     y: -8

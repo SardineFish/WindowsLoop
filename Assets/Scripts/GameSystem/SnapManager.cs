@@ -12,6 +12,8 @@ public class SnapManager : Singleton<SnapManager>
     public int PID { get; private set; }
     Dictionary<int, AttachedInstanceData> AttachedData = new Dictionary<int, AttachedInstanceData>();
     public HashSet<int> AttachedInstances = new HashSet<int>();
+
+    bool isPreviousActive = false;
     private void Awake()
     {
         Snapper.OnAttached += Snapper_OnAttached;
@@ -52,10 +54,18 @@ public class SnapManager : Singleton<SnapManager>
         {
             CameraManager.Instance.StartMotion();
         }
+        if(AttachedInstances.Count == 0)
+        {
+            GameMap.Instance.ResetBorder(CameraManager.Instance.ViewportTileRect);
+        }
     }
 
     private void Snapper_OnAttached(int pid, Vec2 relativePos)
     {
+        if(AttachedInstances.Count == 0)
+        {
+            GameMap.Instance.FillBorder(CameraManager.Instance.ViewportTileRect);
+        }
         Vector2Int posInt = new Vector2Int(Mathf.RoundToInt(relativePos.X / 40), Mathf.RoundToInt(relativePos.Y / 40));
 
         if (!AttachedData.ContainsKey(pid))
@@ -125,6 +135,7 @@ public class SnapManager : Singleton<SnapManager>
             syncRange.max = max;
 
             var instanceViewport = instanceData.ViewRect;
+
 
             for(int x = syncRange.xMin; x < syncRange.xMax; ++x)
             {
@@ -210,6 +221,11 @@ public class SnapManager : Singleton<SnapManager>
             }
         }
 
+        if (Input.GetKeyDown(KeyCode.F3))
+            GameMap.Instance.FillBorder(CameraManager.Instance.ViewportTileRect);
+        if (Input.GetKeyDown(KeyCode.F4))
+            GameMap.Instance.ResetBorder(CameraManager.Instance.ViewportTileRect);
+
         // Update connection to active instance by searching all attached instance
         // Thees values will propergate to all attached game instance.
         if (shouldUpdateConnection)
@@ -254,8 +270,14 @@ public class SnapManager : Singleton<SnapManager>
     {
         if(SelfData.IsActiveInstance)
         {
-            GameSystem.Instance.Player.gameObject.SetActive(true);
-            GameSystem.Instance.Player.EnableControl = true;
+            if(!isPreviousActive)
+            {
+                var player = GameSystem.Instance.Player;
+                player.gameObject.SetActive(true);
+                player.EnableControl = true;
+                player.rigidbody.MovePosition(player.transform.position.ToVector2() + Vector2.up * 0.005f);
+                isPreviousActive = true;
+            }
 
             var viewportRect = CameraManager.Instance.ViewportTileRect;
             var pos = GameSystem.Instance.Player.transform.position.ToVector2();
@@ -290,6 +312,7 @@ public class SnapManager : Singleton<SnapManager>
         }
         else if(SelfData.ConnectActiveThrough != 0)
         {
+            isPreviousActive = false;
             GameSystem.Instance.Player.gameObject.SetActive(true);
             var activePID = PublicData.ActiveInstancePID;
             var activeInstance = GetGameData(activePID);
@@ -311,6 +334,7 @@ public class SnapManager : Singleton<SnapManager>
         }
         else
         {
+            isPreviousActive = false;
             GameSystem.Instance.Player.gameObject.SetActive(false);
         }
     }

@@ -5,6 +5,7 @@ using UnityEngine.Tilemaps;
 
 public class GameMap : Singleton<GameMap>
 {
+    public TileBase BlankTile;
     public Tilemap BaseMap;
     public Tilemap RuntimeMap;
     public Tilemap AttachMap;
@@ -161,4 +162,30 @@ public class GameMap : Singleton<GameMap>
         RuntimeMap.SetTile(pos.ToVector3Int(), tile);
     }
 
+    public void FillBorder(RectInt viewportRect)
+    {
+        var extend = CameraManager.Instance.preloadExtend;
+        FillArea(new RectInt(viewportRect.xMin - extend, viewportRect.yMin - extend, extend, viewportRect.size.y + 2 * extend), BlankTile);
+        FillArea(new RectInt(viewportRect.xMin, viewportRect.yMin - extend, viewportRect.size.x, extend), BlankTile);
+        FillArea(new RectInt(viewportRect.xMax, viewportRect.yMin - extend, extend, viewportRect.size.y + 2 * extend), BlankTile);
+        FillArea(new RectInt(viewportRect.xMin, viewportRect.yMax, viewportRect.size.x, extend), BlankTile);
+
+    }
+
+    public void ResetBorder(RectInt viewportRect)
+    {
+        previousActiveRect = viewportRect;
+        UpdateVisibleArea(CameraManager.Instance.preloadRect);
+    }
+
+    void FillArea(RectInt rect, TileBase tile)
+    {
+        for(int x = rect.xMin; x < rect.xMax; ++x)
+        {
+            for(int y = rect.yMin; y < rect.yMax; ++y)
+            {
+                RuntimeMap.SetTile(new Vector3Int(x, y, 0), tile);
+            }
+        }
+    }
 }
