@@ -40,7 +40,24 @@ public class SceneLoader : Singleton<SceneLoader>
                         PublicData.LevelState = 2;
                         PublicData.Flush();
                     }
+                        
                     break;
+                }
+            case 2:
+                {
+                    var pos = GameSystem.Instance.Player.transform.position.ToVector2Int().ToVector3Int();
+                    var tile = GameMap.Instance.RuntimeMap.GetTile(pos);
+                    if (tile is GemTile)
+                    {
+                        Debug.LogError("Level complete.");
+                        PublicData.LevelState = 3;
+                        PublicData.Flush();
+                        GameMap.Instance.BaseMap.SetTile(pos, null);
+                        GameMap.Instance.RuntimeMap.SetTile(pos, null);
+                    }
+
+                    break;
+
                 }
 
         }
