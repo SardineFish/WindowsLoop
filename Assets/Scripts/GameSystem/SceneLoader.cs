@@ -45,21 +45,64 @@ public class SceneLoader : Singleton<SceneLoader>
                 }
             case 2:
                 {
-                    var pos = GameSystem.Instance.Player.transform.position.ToVector2Int().ToVector3Int();
-                    var tile = GameMap.Instance.RuntimeMap.GetTile(pos);
-                    if (tile is GemTile)
-                    {
-                        Debug.LogError("Level complete.");
-                        PublicData.LevelState = 3;
-                        PublicData.Flush();
-                        GameMap.Instance.BaseMap.SetTile(pos, null);
-                        GameMap.Instance.RuntimeMap.SetTile(pos, null);
-                    }
+                    GamePass(3);
 
                     break;
 
                 }
+            case 3:
+                {
+                    LoadScene("SampleScene", 4);
 
+                    break;
+                }
+
+            case 4:
+                {
+                    if (PublicData.ActiveInstancePID == Snapper.PID)
+                    {
+                        GamePass(5);
+                    }
+                    break;
+                }
+            case 5:
+                {
+                    break;
+                }
+
+        }
+    }
+
+    bool GamePass(int nextState)
+    {
+        if(PublicData.ActiveInstancePID != Snapper.PID)
+        {
+            return false;
+        }
+        var pos = GameSystem.Instance.Player.transform.position.ToVector2Int().ToVector3Int();
+        var tile = GameMap.Instance.RuntimeMap.GetTile(pos);
+        if(tile is GemTile)
+        {
+            GameMap.Instance.BaseMap.SetTile(pos, null);
+            GameMap.Instance.RuntimeMap.SetTile(pos, null);
+            AudioManager.Instance.GetGem();
+
+
+            Debug.LogError("Level complete.");
+            PublicData.LevelState = nextState;
+            PublicData.Flush();
+        }
+        return tile is GemTile;
+    }
+
+    void LoadScene(string name, int nextState)
+    {
+        if (!sceneLoaded)
+        {
+            UnityEngine.SceneManagement.SceneManager.LoadScene(name, LoadSceneMode.Single);
+            sceneLoaded = true;
+            PublicData.LevelState = nextState;
+            PublicData.Flush();
         }
     }
 }

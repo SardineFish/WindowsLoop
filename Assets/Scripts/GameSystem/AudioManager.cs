@@ -8,6 +8,7 @@ public class AudioManager : Singleton<AudioManager>
     public AudioClip FootstepSFX;
     public AudioClip JumpSFX;
     public AudioClip LandSFX;
+    public AudioClip GemSFX;
 
     public bool IsAudioHost => System.Environment.GetCommandLineArgs().Any(arg => arg == "-audiohost");
 
@@ -97,5 +98,10 @@ public class AudioManager : Singleton<AudioManager>
     public void Land()
     {
         SFXAudioSource.PlayOneShot(LandSFX);
+    }
+
+    public void GetGem()
+    {
+        SFXAudioSource.PlayOneShot(GemSFX);
     }
 }

@@ -224,6 +224,7 @@ MonoBehaviour:
   FootstepSFX: {fileID: 8300000, guid: 909015774f9ce4d48a6e4d108a7d52d3, type: 3}
   JumpSFX: {fileID: 8300000, guid: a94b41b4ec5ece94e978e70ea335ad7a, type: 3}
   LandSFX: {fileID: 8300000, guid: a0bb854b251011941abf2990b334b9c1, type: 3}
+  GemSFX: {fileID: 8300000, guid: e377d24242adf9a4ab49679b16a8e345, type: 3}
   WalkAudioSource: {fileID: 6847604963882627922}
   SFXAudioSource: {fileID: 6847604963882627245}
   BGMAudioSource: {fileID: 6847604963882627244}
