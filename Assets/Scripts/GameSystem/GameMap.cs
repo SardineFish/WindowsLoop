@@ -9,6 +9,8 @@ public class GameMap : Singleton<GameMap>
     public Tilemap BaseMap;
     public Tilemap RuntimeMap;
     public Tilemap AttachMap;
+    public Tilemap BackgroundMap;
+    public Tilemap RuntimeBackgroundMap;
     public RectInt LoopArea;
 
     private RectInt previousActiveRect;
@@ -17,22 +19,28 @@ public class GameMap : Singleton<GameMap>
     {
         RuntimeMap = CreateTilemapLayer("RuntimeTileMap");
         AttachMap = CreateTilemapLayer("AttachMap");
+        RuntimeBackgroundMap = CreateTilemapLayer("RuntimeBackGround", false);
+        RuntimeBackgroundMap.transform.Translate(new Vector3(0, 0, 10));
         BaseMap.gameObject.SetActive(false);
+        BackgroundMap.gameObject.SetActive(false);
     }
 
-    Tilemap CreateTilemapLayer(string name)
+    Tilemap CreateTilemapLayer(string name, bool enableCollider = true)
     {
         var obj = new GameObject(name);
         var tilemap = obj.AddComponent<Tilemap>();
         obj.transform.parent = transform;
         obj.AddComponent<TilemapRenderer>();
-        var collider = obj.AddComponent<TilemapCollider2D>();
-        collider.usedByComposite = true;
-        var rigidbody = obj.AddComponent<Rigidbody2D>();
-        rigidbody.bodyType = RigidbodyType2D.Static;
-        var composite = obj.AddComponent<CompositeCollider2D>();
-        composite.generationType = CompositeCollider2D.GenerationType.Synchronous;
-        composite.geometryType = CompositeCollider2D.GeometryType.Polygons;
+        if(enableCollider)
+        {
+            var collider = obj.AddComponent<TilemapCollider2D>();
+            collider.usedByComposite = true;
+            var rigidbody = obj.AddComponent<Rigidbody2D>();
+            rigidbody.bodyType = RigidbodyType2D.Static;
+            var composite = obj.AddComponent<CompositeCollider2D>();
+            composite.generationType = CompositeCollider2D.GenerationType.Synchronous;
+            composite.geometryType = CompositeCollider2D.GeometryType.Polygons;
+        }
         return tilemap;
     }
 
@@ -130,6 +138,8 @@ public class GameMap : Singleton<GameMap>
         pos += LoopArea.min.ToVector3Int();
         var tile = BaseMap.GetTile(pos);
         RuntimeMap.SetTile(new Vector3Int(x, y, 0), tile);
+        tile = BackgroundMap.GetTile(pos);
+        RuntimeBackgroundMap.SetTile(new Vector3Int(x, y, 0), tile);
     }
 
     void RemoveRuntimeTileAt(int x, int y)
