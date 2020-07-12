@@ -158,6 +158,27 @@ public static class PublicData
         set => page.Write(PublicDataAddr.ActiveInstancePID, value);
     }
 
+    public static bool IsWalking
+    {
+        get => page.ReadBoolean(PublicDataAddr.IsWalking);
+        set => page.Write(PublicDataAddr.IsWalking, value);
+    }
+
+    public static bool IsJumped
+    {
+        get => page.ReadBoolean(PublicDataAddr.IsJumped);
+        set => page.Write(PublicDataAddr.IsJumped, value);
+
+    }
+    public static bool IsLanded
+    {
+        get => page.ReadBoolean(PublicDataAddr.IsLanded);
+        set => page.Write(PublicDataAddr.IsLanded, true);
+    }
+
+   
+    
+
     public static void Flush() => page.Flush();
 }
 
@@ -182,5 +203,8 @@ public class GameDataAddr : WindowSnap.Address
 public class PublicDataAddr
 {
     public const int UserData = 2048;
-    public const int ActiveInstancePID = UserData + 0x0;
+    public const int ActiveInstancePID = UserData + 0x0; // int
+    public const int IsWalking = UserData + 0x4; // bool
+    public const int IsJumped = UserData + 0x8; // bool
+    public const int IsLanded = UserData + 0xc; // bool
 }

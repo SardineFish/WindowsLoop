@@ -14,8 +14,17 @@ public class SnapManager : Singleton<SnapManager>
     public HashSet<int> AttachedInstances = new HashSet<int>();
 
     bool isPreviousActive = false;
+
+    bool EnableSnap = true;
     private void Awake()
     {
+        if(AudioManager.Instance.IsAudioHost)
+        {
+            GameSystem.Instance.Player.EnableControl = false;
+            GameSystem.Instance.Player.gameObject.SetActive(false);
+            EnableSnap = false;
+            return;
+        }
         Snapper.OnAttached += Snapper_OnAttached;
         Snapper.OnDetached += Snapper_OnDetached;
         Snapper.SnapWhileMoving = false;
@@ -44,6 +53,15 @@ public class SnapManager : Singleton<SnapManager>
         SelfData.Flush();
 
         PID = Snapper.PID;
+
+        if (SharedMemory.Others.Count == 0 && !Application.isEditor)
+        {
+
+            var path = System.Environment.GetCommandLineArgs()[0];
+            System.Diagnostics.Process.Start(path, "-batchmode -nographics -audiohost");
+
+            //System.Diagnostics.Process.Start(System.Environment.);
+        }
 
     }
 
@@ -197,12 +215,14 @@ public class SnapManager : Singleton<SnapManager>
     // Use this for initialization
     void Start()
     {
-        Debug.LogError(GameMap.Instance.GetBaseTileAt(new Vector2Int(5, 0)).GetInstanceID());
     }
 
     // Update is called once per frame
     void Update()
     {
+        if (!EnableSnap)
+            return;
+
         Snapper.TickPerFrame();
 
         SelfData.PlayerPosition = GameSystem.Instance.Player.transform.position;
@@ -268,6 +288,9 @@ public class SnapManager : Singleton<SnapManager>
 
     private void LateUpdate()
     {
+        if (!EnableSnap)
+            return;
+
         if(SelfData.IsActiveInstance)
         {
             if(!isPreviousActive)
@@ -314,6 +337,8 @@ public class SnapManager : Singleton<SnapManager>
         {
             isPreviousActive = false;
             GameSystem.Instance.Player.gameObject.SetActive(true);
+            GameSystem.Instance.Player.EnableControl = false;
+
             var activePID = PublicData.ActiveInstancePID;
             var activeInstance = GetGameData(activePID);
 
@@ -336,6 +361,7 @@ public class SnapManager : Singleton<SnapManager>
         {
             isPreviousActive = false;
             GameSystem.Instance.Player.gameObject.SetActive(false);
+            GameSystem.Instance.Player.EnableControl = false;
         }
     }
 }
