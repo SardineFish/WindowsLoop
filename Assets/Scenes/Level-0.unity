@@ -8240,9 +8240,9 @@ MonoBehaviour:
   RuntimeBackgroundMap: {fileID: 0}
   LoopArea:
     x: -48
-    y: -14
+    y: -15
     width: 109
-    height: 22
+    height: 23
 --- !u!4 &3298174668888773411
 Transform:
   m_ObjectHideFlags: 0
@@ -11439,7 +11439,7 @@ Tilemap:
     second:
       serializedVersion: 2
       m_TileIndex: 4
-      m_TileSpriteIndex: 4
+      m_TileSpriteIndex: 18
       m_TileMatrixIndex: 0
       m_TileColorIndex: 0
       m_TileObjectToInstantiateIndex: 65535
@@ -18469,8 +18469,8 @@ Tilemap:
   - m_RefCount: 2
     m_Data: {fileID: 3287008341676758806, guid: a9fac62c2ac397b4db1df291eec07eb0,
       type: 3}
-  - m_RefCount: 1
-    m_Data: {fileID: 21300000, guid: 3dd9c4673e0e15a44ba5b03fe1987d28, type: 3}
+  - m_RefCount: 0
+    m_Data: {fileID: 0}
   - m_RefCount: 2
     m_Data: {fileID: -43709620931494631, guid: 3f403557e5aaffd4ea03425d57fa16ba, type: 3}
   - m_RefCount: 5
@@ -18509,8 +18509,8 @@ Tilemap:
   - m_RefCount: 6
     m_Data: {fileID: 9009148361035846657, guid: a9fac62c2ac397b4db1df291eec07eb0,
       type: 3}
-  - m_RefCount: 0
-    m_Data: {fileID: 0}
+  - m_RefCount: 1
+    m_Data: {fileID: 21300000, guid: 3dd9c4673e0e15a44ba5b03fe1987d28, type: 3}
   - m_RefCount: 3
     m_Data: {fileID: 4240746817062648365, guid: 3f403557e5aaffd4ea03425d57fa16ba,
       type: 3}

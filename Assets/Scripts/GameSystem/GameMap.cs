@@ -45,6 +45,7 @@ public class GameMap : Singleton<GameMap>
             var composite = obj.AddComponent<CompositeCollider2D>();
             composite.generationType = CompositeCollider2D.GenerationType.Synchronous;
             composite.geometryType = CompositeCollider2D.GeometryType.Polygons;
+            composite.offsetDistance = 0.01f;
         }
         return tilemap;
     }
