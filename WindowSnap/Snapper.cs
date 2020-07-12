@@ -278,7 +278,8 @@ namespace WindowSnap
                 OnDetached?.Invoke(remotePID);
                 Log($"Detached({remotePID})");
             }
-            if (SharedMemory.Self.ReadBoolean(Address.AttachmentChanged))
+            if (!SharedMemory.Self.ReadBoolean(Address.DetachmentChanged) &&
+                SharedMemory.Self.ReadBoolean(Address.AttachmentChanged))
             {
                 SharedMemory.Self.Write(Address.AttachmentChanged, false);
                 SharedMemory.Self.Flush();
