@@ -7,7 +7,12 @@ using System.Linq;
 public class SnapManager : Singleton<SnapManager>
 {
 
-    public GameInstanceData GetGameData(int pid) => new GameInstanceData(SharedMemory.GetPageByPID(pid));
+    public GameInstanceData GetGameData(int pid)
+    {
+        if (pid == 0)
+            return new GameInstanceData(null);
+        return new GameInstanceData(SharedMemory.GetPageByPID(pid));
+    }
     GameInstanceData SelfData;
     int PID { get; set; }
     Dictionary<int, AttachedInstanceData> AttachedData = new Dictionary<int, AttachedInstanceData>();
@@ -63,7 +68,9 @@ public class SnapManager : Singleton<SnapManager>
 
     private void Snapper_OnDetached(int pid)
     {
+        Debug.LogError($"Detached with {pid}");
         AttachedInstances.Remove(pid);
+        
         if(AttachedInstances.Count == 0 && PublicData.ActiveInstancePID == Snapper.PID)
         {
             CameraManager.Instance.StartMotion();
@@ -76,7 +83,8 @@ public class SnapManager : Singleton<SnapManager>
 
     private void Snapper_OnAttached(int pid, Vec2 relativePos)
     {
-        if(AttachedInstances.Count == 0)
+        Debug.LogError($"Attached with {pid}");
+        if (AttachedInstances.Count == 0)
         {
             GameMap.Instance.FillBorder(CameraManager.Instance.ViewportTileRect);
         }
@@ -298,6 +306,7 @@ public class SnapManager : Singleton<SnapManager>
                 player.rigidbody.bodyType = RigidbodyType2D.Dynamic;
                 player.EnableControl = true;
                 player.rigidbody.MovePosition(player.transform.position.ToVector2() + Vector2.up * 0.005f);
+                player.velocity = player.rigidbody.velocity;
                 isPreviousActive = true;
             }
 
@@ -311,9 +320,9 @@ public class SnapManager : Singleton<SnapManager>
             {
                 var relativePos = pos - viewportRect.min;
 
-                var nextActive = AttachedData
-                    .Where(attachedData => attachedData.Value.RelativeTileRect.Contains(relativePos))
-                    .Select(p => p.Value)
+                var nextActive = AttachedInstances
+                    .Select(p => AttachedData[p])
+                    .Where(attachedData => attachedData.RelativeTileRect.Contains(relativePos))
                     .FirstOrDefault();
 
                 if(nextActive is null)

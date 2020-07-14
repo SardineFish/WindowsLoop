@@ -43,10 +43,15 @@ namespace WindowSnap
         public static MemoryMappedViewAccessor GetPage(int index) =>
             index >= 0 && index < PageCount ? mmf.CreateViewAccessor(index * PageSize, PageSize) : null;
 
-        public static MemoryMappedViewAccessor GetPageByPID(int pid) =>
-            Array.IndexOf(PageTable, pid) is var index && index >= 0
-            ? GetPage(index)
-            : null;
+        public static MemoryMappedViewAccessor GetPageByPID(int pid)
+        {
+            var index = Array.IndexOf(PageTable, pid);
+            Snapper.Log?.Invoke($"Request page with PID {pid}, found at {index}");
+
+            return index >= 0
+                ? GetPage(index)
+                : null;
+        }
 
         static int AllocatePage()
         {

@@ -21,7 +21,7 @@ public class SnapInit : Singleton<SnapInit>
             PublicData.Flush();
         }
 
-
+        Debug.LogError($"PID = {Snapper.PID}");
 
         if (SharedMemory.Others.Count == 0 && !Application.isEditor)
         {

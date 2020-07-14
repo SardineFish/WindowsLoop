@@ -50,7 +50,7 @@ public class PlayerController : MonoBehaviour
     bool focused = true;
     Vector2 rawMovementInput;
     Vector2 dampedInput = Vector2.zero;
-    Vector2 velocity;
+    public Vector2 velocity;
     bool onGround = false;
     new BoxCollider2D collider;
     new SpriteRenderer renderer;

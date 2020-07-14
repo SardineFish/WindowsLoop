@@ -220,7 +220,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7e594bea451b00a40bbedcdb665cbcc7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  BGM: {fileID: 8300000, guid: 0cf25d29c38a8d14fb858ace9ff58304, type: 3}
+  BGM: {fileID: 8300000, guid: ebca41329d36bc44a8c5b030f6ef8e7d, type: 3}
   FootstepSFX: {fileID: 8300000, guid: 909015774f9ce4d48a6e4d108a7d52d3, type: 3}
   JumpSFX: {fileID: 8300000, guid: a94b41b4ec5ece94e978e70ea335ad7a, type: 3}
   LandSFX: {fileID: 8300000, guid: a0bb854b251011941abf2990b334b9c1, type: 3}
@@ -239,10 +239,10 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
-  m_PlayOnAwake: 1
+  m_PlayOnAwake: 0
   m_Volume: 1
   m_Pitch: 1
-  Loop: 0
+  Loop: 1
   Mute: 0
   Spatialize: 0
   SpatializePostEffects: 0
@@ -335,7 +335,7 @@ AudioSource:
   serializedVersion: 4
   OutputAudioMixerGroup: {fileID: 0}
   m_audioClip: {fileID: 0}
-  m_PlayOnAwake: 1
+  m_PlayOnAwake: 0
   m_Volume: 1
   m_Pitch: 1
   Loop: 0
