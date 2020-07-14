@@ -24,6 +24,7 @@ namespace WindowSnap
         public static readonly int ClientOffsetX;
         public static readonly int ClientOffsetY;
         public static readonly int PID;
+        public static SharedMemoryDataPage SelfPage;
         public static bool SnapWhileMoving { get; set; } = false;
         static readonly IntPtr originalWndProcPtr;
         static readonly WndProc wndProcDelegate;
@@ -66,8 +67,8 @@ namespace WindowSnap
         public static void Init()
         {
             SharedMemory.Init();
-            SharedMemory.Self.Write(Address.PID, PID);
-            SharedMemory.Self.Flush();
+            SelfPage = SharedMemoryDataPage.Self;
+            SelfPage.PID = PID;
             clientSnapRect = new RECT
             {
                 Left = 0,
@@ -84,9 +85,8 @@ namespace WindowSnap
         static void UpdateScreenSnapRect()
         {
             var screenSnapRect = GetScreenSnapRect();
-            SharedMemory.Self.Write(Address.ScreenSnapRectX, screenSnapRect.Left);
-            SharedMemory.Self.Write(Address.ScreenSnapRectY, screenSnapRect.Top);
-            SharedMemory.Self.Flush();
+            SelfPage.ScreenSnapRectX = screenSnapRect.Left;
+            SelfPage.ScreenSnapRectY = screenSnapRect.Top;
         }
         static RECT GetScreenSnapRect()
         {
@@ -143,21 +143,20 @@ namespace WindowSnap
                             Right = cursor.X - dragOffsetX + WindowWidth,
                             Bottom = cursor.Y - dragOffsetY + WindowHeight,
                         };
-                        var screenSnapRect = windowRect
-                        .Translate(ClientOffsetX, ClientOffsetY)
-                        .Translate(clientSnapRect.Left, clientSnapRect.Top);
+                        var screenSnapRect = WindowRectToScreenSnapRect(windowRect);
 
                         var snaped = false;
                         var targetScreenSnapRect = new RECT();
                         var attachedWindowPID = 0;
-                        foreach (var page in otherPages)
+                        foreach (var accessor in otherPages)
                         {
+                            var page = new SharedMemoryDataPage(accessor);
                             targetScreenSnapRect = new RECT
                             {
-                                Left = page.ReadInt32(Address.ScreenSnapRectX),
-                                Top = page.ReadInt32(Address.ScreenSnapRectY),
-                                Right = page.ReadInt32(Address.ScreenSnapRectX) + SnapRectWidth,
-                                Bottom = page.ReadInt32(Address.ScreenSnapRectY) + SnapRectHeight,
+                                Left = page.ScreenSnapRectX,
+                                Top = page.ScreenSnapRectY,
+                                Right = page.ScreenSnapRectX + SnapRectWidth,
+                                Bottom = page.ScreenSnapRectY + SnapRectHeight,
                             };
                             if (InSnapRange(screenSnapRect.Left, targetScreenSnapRect.Right) &&
                                 screenSnapRect.Top < targetScreenSnapRect.Bottom &&
@@ -182,22 +181,16 @@ namespace WindowSnap
                             else
                                 continue;
                             snaped = true;
-                            attachedWindowPID = page.ReadInt32(Address.PID);
+                            attachedWindowPID = page.PID;
                             break;
                         }
                         Log($"EdgeSnap");
                         if (snaped)
                         {
-                            var offsetX = (double)targetScreenSnapRect.Left % TileSize;
-                            var offsetY = (double)targetScreenSnapRect.Top % TileSize;
-                            var x = (int)(
-                            Math.Round((screenSnapRect.Left - offsetX) / TileSize) * TileSize + offsetX);
-                            var y = (int)(
-                            Math.Round((screenSnapRect.Top - offsetY) / TileSize) * TileSize + offsetY);
-                            screenSnapRect = screenSnapRect.MoveTo(x, y);
-                            windowRect = screenSnapRect
-                                .Translate(-ClientOffsetX, -ClientOffsetY)
-                                .Translate(-clientSnapRect.Left, -clientSnapRect.Top);
+                            var offsetX = targetScreenSnapRect.Left % TileSize;
+                            var offsetY = targetScreenSnapRect.Top % TileSize;
+                            screenSnapRect = screenSnapRect.SnapToGrid(TileSize, TileSize, offsetX, offsetY);
+                            windowRect = ScreenSnapRectToWindowRect(screenSnapRect);
                         }
                         Log($"GridSnap");
                         if (msg == WM.MOVING)
@@ -222,12 +215,11 @@ namespace WindowSnap
                                 SharedMemory.Self.ReadArray<int>(Address.AttachedWindowPIDs, AttachedWindowPIDsCapacity)
                                 .Where(pid => pid > 0))
                             {
-                                var remotePage = SharedMemory.GetPageByPID(remotePID);
+                                var remotePage = new SharedMemoryDataPage(SharedMemory.GetPageByPID(remotePID));
                                 if (remotePage != null)
                                 {
-                                    remotePage.Write(Address.DetachmentChanged, true);
-                                    remotePage.Write(Address.MessageParam2, PID);
-                                    remotePage.Flush();
+                                    remotePage.DetachmentChanged = true;
+                                    remotePage.MessageParam2 = PID;
                                     OnDetached?.Invoke(remotePID);
                                     Log($"Detached({remotePID})");
                                 }
@@ -243,14 +235,14 @@ namespace WindowSnap
 
                             if (attachedWindowPID > 0)
                             {
-                                var attachedWindowPage = SharedMemory.GetPageByPID(attachedWindowPID);
+                                var attachedWindowPage =
+                                    new SharedMemoryDataPage(SharedMemory.GetPageByPID(attachedWindowPID));
                                 if (attachedWindowPage == null)
                                 {
                                     Log($"Fatal: page table corrupted");
                                 }
-                                attachedWindowPage.Write(Address.AttachmentChanged, true);
-                                attachedWindowPage.Write(Address.MessageParam1, PID);
-                                attachedWindowPage.Flush();
+                                attachedWindowPage.AttachmentChanged = true;
+                                attachedWindowPage.MessageParam1 = PID;
 
                                 SharedMemory.Self.Write(Address.AttachedWindowPIDs, attachedWindowPID);
                                 SharedMemory.Self.Flush();
@@ -282,11 +274,10 @@ namespace WindowSnap
         }
         public static void TickPerFrame()
         {
-            if (SharedMemory.Self.ReadBoolean(Address.DetachmentChanged))
+            if (SelfPage.DetachmentChanged)
             {
-                SharedMemory.Self.Write(Address.DetachmentChanged, false);
-                SharedMemory.Self.Flush();
-                var remotePID = SharedMemory.Self.ReadInt32(Address.MessageParam2);
+                SelfPage.DetachmentChanged = false;
+                var remotePID = SelfPage.MessageParam2;
                 var attachedWindowPIDs =
                     SharedMemory.Self.ReadArray<int>(Address.AttachedWindowPIDs, AttachedWindowPIDsCapacity);
                 attachedWindowPIDs.Unset(remotePID);
@@ -295,12 +286,10 @@ namespace WindowSnap
                 OnDetached?.Invoke(remotePID);
                 Log($"Detached({remotePID})");
             }
-            if (!SharedMemory.Self.ReadBoolean(Address.DetachmentChanged) &&
-                SharedMemory.Self.ReadBoolean(Address.AttachmentChanged))
+            if (!SelfPage.DetachmentChanged && SelfPage.AttachmentChanged)
             {
-                SharedMemory.Self.Write(Address.AttachmentChanged, false);
-                SharedMemory.Self.Flush();
-                var remotePID = SharedMemory.Self.ReadInt32(Address.MessageParam1);
+                SelfPage.AttachmentChanged = false;
+                var remotePID = SelfPage.MessageParam1;
                 var relativePosition = GetRelativePos(remotePID);
                 var attachedWindowPIDs =
                     SharedMemory.Self.ReadArray<int>(Address.AttachedWindowPIDs, AttachedWindowPIDsCapacity);
@@ -319,5 +308,14 @@ namespace WindowSnap
                 page.ReadInt32(Address.ScreenSnapRectX) - GetScreenSnapRect().Left,
                 page.ReadInt32(Address.ScreenSnapRectY) - GetScreenSnapRect().Top);
         }
+
+        static RECT ScreenSnapRectToWindowRect(RECT screenSnapRect) =>
+            screenSnapRect
+                .Translate(-ClientOffsetX, -ClientOffsetY)
+                .Translate(-clientSnapRect.Left, -clientSnapRect.Top);
+        static RECT WindowRectToScreenSnapRect(RECT windowRect) =>
+            windowRect
+                .Translate(ClientOffsetX, ClientOffsetY)
+                .Translate(clientSnapRect.Left, clientSnapRect.Top);
     }
 }

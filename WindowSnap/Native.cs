@@ -98,26 +98,30 @@ namespace WindowSnap
             Bottom = bottom;
         }
 
-        public RECT MoveTo(int x = -1, int y = -1)
-        {
-            return new RECT
+        public RECT MoveTo(int x = -1, int y = -1) =>
+            new RECT
             {
                 Left = x >= 0 ? x : Left,
                 Right = (x >= 0 ? x : Left) + Width,
                 Top = y >= 0 ? y : Top,
                 Bottom = (y >= 0 ? y : Top) + Height,
             };
-        }
-        public RECT Translate(int x = 0, int y = 0)
-        {
-            return new RECT
+        public RECT Translate(int x = 0, int y = 0) =>
+            new RECT
             {
                 Left = Left + x,
                 Right = Right + x,
                 Top = Top + y,
                 Bottom = Bottom + y,
             };
+        public RECT SnapToRect(RECT target)
+        {
+
         }
+        public RECT SnapToGrid(int gridWidth, int gridHeight, int offsetX = 0, int offsetY = 0) =>
+            MoveTo(
+                x: (int)(Math.Round((Left - (double)offsetX) / gridWidth) * gridWidth + offsetX),
+                y: (int)(Math.Round((Top - (double)offsetY) / gridHeight) * gridHeight + offsetY));
 
         public override string ToString() => $"{{Left={Left}, Top={Top}, Right={Right}, Bottom={Bottom}}}";
     }
