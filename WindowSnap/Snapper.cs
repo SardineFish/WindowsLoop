@@ -105,8 +105,7 @@ namespace WindowSnap
             int delta = Math.Abs(pos - edge);
             return delta <= SnapThreshold;
         }
-
-        // FIXIT: start a drag before load this WndProc will cause a NullReferenceException
+        
         static List<MemoryMappedViewAccessor> otherPages;
         static IntPtr WndProc(IntPtr hWnd, WM msg, IntPtr wParam, IntPtr lParam)
         {
@@ -129,6 +128,10 @@ namespace WindowSnap
                 break;
             case WM.EXITSIZEMOVE:
                 {
+                    if (otherPages == null)
+                    {
+                        break;
+                    }
                     Log($"ExitMove");
                     GetCursorPos(out var cursor);
                     var windowRect = new RECT
