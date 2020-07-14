@@ -114,10 +114,10 @@ namespace WindowSnap
                 Top = Top + y,
                 Bottom = Bottom + y,
             };
-        public RECT SnapToRect(RECT target)
-        {
-
-        }
+        public bool IsHorizontallyOverlappedWith(RECT target) => Left < target.Right && Right > target.Left;
+        public bool IsVerticallyOverlappedWith(RECT target) => Top < target.Bottom && Bottom > target.Top;
+        public RECT SnapToGrid(int gridSize, int offsetX = 0, int offsetY = 0) =>
+            SnapToGrid(gridSize, gridSize, offsetX, offsetY);
         public RECT SnapToGrid(int gridWidth, int gridHeight, int offsetX = 0, int offsetY = 0) =>
             MoveTo(
                 x: (int)(Math.Round((Left - (double)offsetX) / gridWidth) * gridWidth + offsetX),
