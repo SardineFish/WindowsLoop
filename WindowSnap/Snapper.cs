@@ -29,8 +29,6 @@ namespace WindowSnap
         static readonly WndProc wndProcDelegate;
         static IntPtr hWnd;
         static RECT clientSnapRect;
-        //static RECT screenSnapRect;
-        public static event Action<int, Vec2> OnAttachChanged; // Obsoleted, remove it
         public static event Action<int, Vec2> OnAttached;
         public static event Action<int> OnDetached;
         internal static Action<string> Log;
@@ -70,7 +68,7 @@ namespace WindowSnap
             SharedMemory.Init();
             SharedMemory.Self.Write(Address.PID, PID);
             SharedMemory.Self.Flush();
-            Snapper.clientSnapRect = new RECT
+            clientSnapRect = new RECT
             {
                 Left = 0,
                 Top = 0,
@@ -81,13 +79,8 @@ namespace WindowSnap
             Log($"Window Handle: {hWnd}");
             Log($"Page: {SharedMemory.selfIndex}");
             Log($"Others Count: {SharedMemory.Others.Count}");
-
         }
 
-        public static List<Rect> GetAdjacentWindowBounds()
-        {
-            throw new NotImplementedException();
-        }
         static void UpdateScreenSnapRect()
         {
             var screenSnapRect = GetScreenSnapRect();
@@ -246,8 +239,9 @@ namespace WindowSnap
                         if (attachedWindowPID > 0)
                         {
                             var attachedWindowPage = SharedMemory.GetPageByPID(attachedWindowPID);
-                            if (attachedWindowPage == null) {
-                            Log($"Fatal: page table corrupted");
+                            if (attachedWindowPage == null)
+                            {
+                                Log($"Fatal: page table corrupted");
                             }
                             attachedWindowPage.Write(Address.AttachmentChanged, true);
                             attachedWindowPage.Write(Address.MessageParam1, PID);
