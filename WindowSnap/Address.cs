@@ -12,6 +12,7 @@
         public const int MessageParam2 = 0x24;
         public const int MessageParam3 = 0x28;
         public const int MessageParam4 = 0x2c;
+        public const int WindowHandle = 0x30;
         public const int AttachedWindowPIDs = 0x40;
 
         public const int Preserve = 0x80;

@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.IO.MemoryMappedFiles;
 
 namespace WindowSnap
@@ -8,13 +6,22 @@ namespace WindowSnap
     public class SharedMemoryDataPage
     {
         public static SharedMemoryDataPage Self => new SharedMemoryDataPage(SharedMemory.Self);
-
+        
         public int PID
         {
             get => accessor.ReadInt32(Address.PID);
             set
             {
                 accessor.Write(Address.PID, value);
+                accessor.Flush();
+            }
+        }
+        public int WindowHandle
+        {
+            get => accessor.ReadInt32(Address.WindowHandle);
+            set
+            {
+                accessor.Write(Address.WindowHandle, value);
                 accessor.Flush();
             }
         }

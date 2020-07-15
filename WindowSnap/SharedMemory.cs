@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO.MemoryMappedFiles;
 using System.Linq;
+using static WindowSnap.Logger;
 
 namespace WindowSnap
 {
@@ -19,7 +20,9 @@ namespace WindowSnap
                     Process.GetProcessesByName(Process.GetCurrentProcess().ProcessName).Select(p => p.Id);
                 return PageTable
                     .Select((pid, index) => new { pid, index })
-                    .Where(o => runningPIDs.Contains(o.pid) && o.index != selfIndex && o.index != 0)
+                    .Where(o => runningPIDs.Contains(o.pid))
+                    .Where(o => o.index != selfIndex && o.index != 0)
+                    .Where(o => new SharedMemoryDataPage(GetPageByPID(o.pid)).WindowHandle > 0)
                     .Select(o => GetPage(o.index))
                     .ToList();
             }
@@ -29,11 +32,6 @@ namespace WindowSnap
         static MemoryMappedFile mmf =
             MemoryMappedFile.CreateOrOpen("GameWindowsLoop", PageSize * PageCount);
         static MemoryMappedViewAccessor page0 = mmf.CreateViewAccessor(0, PageSize);
-
-        static SharedMemory()
-        {
-
-        }
 
         internal static void Init()
         {
@@ -46,7 +44,7 @@ namespace WindowSnap
         public static MemoryMappedViewAccessor GetPageByPID(int pid)
         {
             var index = Array.IndexOf(PageTable, pid);
-            Snapper.Log?.Invoke($"Request page with PID {pid}, found at {index}");
+            //LogInfo($"Request page with PID {pid}, found at {index}");
 
             return index >= 0
                 ? GetPage(index)
@@ -55,17 +53,17 @@ namespace WindowSnap
 
         static int AllocatePage()
         {
-            var pageTable = SharedMemory.PageTable;
+            var pageTable = PageTable;
             var runningPIDs = new HashSet<int>(
                 Process.GetProcessesByName(Process.GetCurrentProcess().ProcessName).Select(p => p.Id));
-            Snapper.Log($"Processes: {runningPIDs.Count}");
+            LogInfo($"Processes: {runningPIDs.Count}");
             for (var i = 1; i < PageCount; i++)
             {
                 if (!runningPIDs.Contains(pageTable[i]))
                 {
                     page0.Write(i * sizeof(int), Process.GetCurrentProcess().Id);
                     page0.Flush();
-                    Snapper.Log(SharedMemory.PageTable.Aggregate("", (a, b) => $"{a}{b} "));
+                    LogInfo(PageTable.Aggregate("", (a, b) => $"{a}{b} "));
                     return i;
                 }
             }

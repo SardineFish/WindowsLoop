@@ -11,7 +11,7 @@ namespace WindowSnap
 
         // This helper static method is required because the 32-bit version of user32.dll does not contain this API
         // (on any versions of Windows), so linking the method will fail at run-time. The bridge dispatches the request
-        // to the correct function (GetWindowLong in 32-bit mode and GetWindowLongPtr in 64-bit mode)
+        // to the correct function (SetWindowLong in 32-bit mode and SetWindowLongPtr in 64-bit mode)
         public static IntPtr SetWindowLongPtr(IntPtr hWnd, int nIndex, IntPtr dwNewLong)
         {
             if (IntPtr.Size == 8)
@@ -28,6 +28,11 @@ namespace WindowSnap
         public static extern bool GetWindowRect(IntPtr hwnd, out RECT lpRect);
         [DllImport("user32.dll", SetLastError = true)]
         public static extern bool SetWindowPos(IntPtr hWnd, IntPtr hWndInsertAfter, int X, int Y, int cx, int cy, SetWindowPosFlags uFlags);
+        public static bool SetWindowPos(IntPtr hWnd, RECT targetPos, IntPtr hWndInsertAfter = default(IntPtr))
+            => SetWindowPos(
+                hWnd, hWndInsertAfter,
+                targetPos.Left, targetPos.Top, targetPos.Width, targetPos.Height,
+                SetWindowPosFlags.ShowWindow);
         [DllImport("user32.dll")]
         public static extern bool GetClientRect(IntPtr hWnd, out RECT lpRect);
         [DllImport("user32.dll")]
@@ -116,6 +121,32 @@ namespace WindowSnap
             };
         public bool IsHorizontallyOverlappedWith(RECT target) => Left < target.Right && Right > target.Left;
         public bool IsVerticallyOverlappedWith(RECT target) => Top < target.Bottom && Bottom > target.Top;
+        public bool SnapToRect(RECT target, out RECT snappedRect)
+        {
+            var snapped = false;
+            snappedRect = this;
+            if (InSnapRange(Left, target.Right) && IsVerticallyOverlappedWith(target))
+            {
+                snappedRect = snappedRect.MoveTo(x: target.Right);
+                snapped = true;
+            }
+            else if (InSnapRange(Top, target.Bottom) && IsHorizontallyOverlappedWith(target))
+            {
+                snappedRect = snappedRect.MoveTo(y: target.Bottom);
+                snapped = true;
+            }
+            if (InSnapRange(Right, target.Left) && IsVerticallyOverlappedWith(target))
+            {
+                snappedRect = snappedRect.MoveTo(x: target.Left - Snapper.SnapRectWidth);
+                snapped = true;
+            }
+            else if (InSnapRange(Bottom, target.Top) && IsHorizontallyOverlappedWith(target))
+            {
+                snappedRect = snappedRect.MoveTo(y: target.Top - Snapper.SnapRectHeight);
+                snapped = true;
+            }
+            return snapped;
+        }
         public RECT SnapToGrid(int gridSize, int offsetX = 0, int offsetY = 0) =>
             SnapToGrid(gridSize, gridSize, offsetX, offsetY);
         public RECT SnapToGrid(int gridWidth, int gridHeight, int offsetX = 0, int offsetY = 0) =>
@@ -123,7 +154,13 @@ namespace WindowSnap
                 x: (int)(Math.Round((Left - (double)offsetX) / gridWidth) * gridWidth + offsetX),
                 y: (int)(Math.Round((Top - (double)offsetY) / gridHeight) * gridHeight + offsetY));
 
-        public override string ToString() => $"{{Left={Left}, Top={Top}, Right={Right}, Bottom={Bottom}}}";
+        static bool InSnapRange(int pos, int edge)
+        {
+            int delta = Math.Abs(pos - edge);
+            return delta <= Snapper.SnapThreshold;
+        }
+
+        public override string ToString() => $"{{ Left={Left}, Top={Top}, Right={Right}, Bottom={Bottom} }}";
     }
 
     /// <summary>
@@ -1089,6 +1126,20 @@ namespace WindowSnap
         /// A top-level window is being replaced. The window exists when the system calls this hook.
         /// </summary>
         HSHELL_WINDOWREPLACED = 13
+    }
+
+    enum WindowLongFlags : int
+    {
+         GWL_EXSTYLE = -20,
+         GWLP_HINSTANCE = -6,
+         GWLP_HWNDPARENT = -8,
+         GWL_ID = -12,
+         GWL_STYLE = -16,
+         GWL_USERDATA = -21,
+         GWL_WNDPROC = -4,
+         DWLP_USER = 0x8,
+         DWLP_MSGRESULT = 0x0,
+         DWLP_DLGPROC = 0x4
     }
 
     [Flags()]
