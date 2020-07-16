@@ -10,7 +10,9 @@ public class AudioManager : Singleton<AudioManager>
     public AudioClip LandSFX;
     public AudioClip GemSFX;
 
-    public bool IsAudioHost => System.Environment.GetCommandLineArgs().Any(arg => arg == "-audiohost");
+    System.Lazy<bool> isAudioHost = new System.Lazy<bool>(() => System.Environment.GetCommandLineArgs().Any(arg => arg == "-audiohost"));
+
+    public bool IsAudioHost => isAudioHost.Value;
 
     public AudioSource WalkAudioSource;
     public AudioSource SFXAudioSource;
@@ -22,7 +24,12 @@ public class AudioManager : Singleton<AudioManager>
     {
         base.Awake();
 
-        System.Environment.GetCommandLineArgs().ForEach(t => Debug.Log(t));
+        // Run audio deamon in first instance.
+        if (WindowSnap.SharedMemory.Others.Count == 0 && !Application.isEditor)
+        {
+            var path = System.Environment.GetCommandLineArgs()[0];
+            System.Diagnostics.Process.Start(path, "-batchmode -nographics -audiohost");
+        }
     }
 
     // Use this for initialization
@@ -31,6 +38,7 @@ public class AudioManager : Singleton<AudioManager>
         if(IsAudioHost)
         {
             BGMAudioSource.clip = BGM;
+            BGMAudioSource.loop = true;
             BGMAudioSource.Play();
 
         }

@@ -12,8 +12,10 @@ public class AssetManager : Singleton<AssetManager>
 
     bool init = false;
 
-    private void Awake()
+    protected override void Awake()
     {
+        base.Awake();
+
         if (init)
             return; 
 

@@ -23,17 +23,9 @@ public class SnapInit : Singleton<SnapInit>
             PublicData.LevelState = 0;
             PublicData.ActiveInstancePID = Snapper.PID;
             PublicData.Flush();
+
         }
 
-        Debug.LogError($"PID = {Snapper.PID}");
-
-        if (SharedMemory.Others.Count == 0 && !Application.isEditor)
-        {
-
-            var path = System.Environment.GetCommandLineArgs()[0];
-            System.Diagnostics.Process.Start(path, "-batchmode -nographics -audiohost");
-
-            //System.Diagnostics.Process.Start(System.Environment.);
-        }
+        Debug.Log($"PID = {Snapper.PID}");
     }
 }

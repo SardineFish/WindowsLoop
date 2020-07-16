@@ -74,11 +74,6 @@ public class CameraManager : Singleton<CameraManager>
 
     public new Camera camera;
 
-    private void Awake()
-    {
-        
-    }
-
     // Use this for initialization
     void Start()
     {
