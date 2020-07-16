@@ -7,11 +7,15 @@ public class SnapInit : Singleton<SnapInit>
     protected override void Awake()
     {
         Snapper.SnapWhileMoving = false;
-        Snapper.SetLogCallback(msg =>
-        {
-            Debug.LogError(msg);
-        });
-        Snapper.Init();
+
+        // Setup logger callbacks
+        WindowSnap.Logger.LogError = msg => Debug.LogError(msg);
+        WindowSnap.Logger.LogWarn = msg => Debug.LogWarning(msg);
+        WindowSnap.Logger.LogInfo = msg => Debug.Log(msg);
+        WindowSnap.Logger.LogException = ex => Debug.LogException(ex);
+        WindowSnap.Logger.Ready();
+
+        WindowSnap.Snapper.SnapWhileMoving = false;
 
 
         if (SharedMemory.Others.Count == 0)
