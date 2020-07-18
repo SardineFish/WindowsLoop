@@ -20,7 +20,7 @@ public class SnapInit : Singleton<SnapInit>
 
         if (SharedMemory.Others.Count == 0)
         {
-            PublicData.LevelState = 0;
+            PublicData.GameStage = 0;
             PublicData.ActiveInstancePID = Snapper.PID;
             PublicData.Flush();
 

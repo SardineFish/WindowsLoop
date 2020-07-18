@@ -148,6 +148,16 @@ public class GameMap : Singleton<GameMap>
         RuntimeBackgroundMap.SetTile(new Vector3Int(x, y, 0), tile);
     }
 
+    public void SetBaseTileAt(int x, int y, TileBase tile)
+    {
+        var pos = new Vector3Int(
+            FloorReminder(x - LoopArea.xMin, LoopArea.size.x),
+            FloorReminder(y - LoopArea.yMin, LoopArea.size.y),
+            0);
+        pos += LoopArea.min.ToVector3Int();
+        BaseMap.SetTile(pos, tile);
+    }
+
     void RemoveRuntimeTileAt(int x, int y)
     {
         RuntimeMap.SetTile(new Vector3Int(x, y, 0), null);

@@ -176,13 +176,24 @@ public static class PublicData
         set => page.Write(PublicDataAddr.IsLanded, true);
     }
 
-    public static int LevelState
+    public static int GameStage
     {
         get => page.ReadInt32(PublicDataAddr.LevelState);
         set => page.Write(PublicDataAddr.LevelState, value);
     }
 
-    
+    public static int GetScenePID(int index)
+    {
+        if(index >= PublicDataAddr.MaxScenes)
+            throw new IndexOutOfRangeException();
+
+        return page.ReadInt32(PublicDataAddr.ScenesPID + index * sizeof(int));
+    }
+
+    public static void SetScenePID(int index, int pid)
+    {
+        page.Write(PublicDataAddr.ScenesPID + index * sizeof(int), pid);
+    }
 
     public static void Flush() => page.Flush();
 }
@@ -213,4 +224,7 @@ public class PublicDataAddr
     public const int IsJumped = UserData + 0x8; // bool
     public const int IsLanded = UserData + 0xc; // bool
     public const int LevelState = UserData + 0x10; // int
+
+    public const int MaxScenes = 4;
+    public const int ScenesPID = UserData + 0x14; // int[MaxScenes]
 }

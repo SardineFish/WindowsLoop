@@ -166,6 +166,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_DontDestroyOnLoad: 1
   sceneLoaded: 0
+  GameStages:
+  - Scenes:
+    - Level-0-Assist
+    - Level-0
+  - Scenes:
+    - SampleScene
 --- !u!1 &256681242
 GameObject:
   m_ObjectHideFlags: 0
