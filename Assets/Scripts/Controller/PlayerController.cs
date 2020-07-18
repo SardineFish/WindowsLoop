@@ -1,9 +1,10 @@
 ﻿using UnityEngine;
 using System.Collections;
 using UnityRawInput;
+using UnityEngine.Tilemaps;
+using System.Collections.Generic;
 
 [RequireComponent(typeof(BoxCollider2D))]
-[RequireComponent(typeof(Rigidbody2D))]
 [RequireComponent(typeof(SpriteRenderer))]
 public class PlayerController : MonoBehaviour
 {
@@ -50,7 +51,7 @@ public class PlayerController : MonoBehaviour
     bool focused = true;
     Vector2 rawMovementInput;
     Vector2 dampedInput = Vector2.zero;
-    public Vector2 velocity;
+    Vector2 m_Velocity;
     bool onGround = false;
     new BoxCollider2D collider;
     new SpriteRenderer renderer;
@@ -62,14 +63,15 @@ public class PlayerController : MonoBehaviour
         get => m_EnableControl;
         set => m_EnableControl = value;
     }
-
-
-    public new Rigidbody2D rigidbody;
+    public Vector2 velocity
+    {
+        get => m_Velocity;
+        private set => m_Velocity = value;
+    }
 
     private void Awake()
     {
         collider = GetComponent<BoxCollider2D>();
-        rigidbody = GetComponent<Rigidbody2D>();
         renderer = GetComponent<SpriteRenderer>();
     }
     private void OnEnable()
@@ -85,32 +87,6 @@ public class PlayerController : MonoBehaviour
     // Use this for initialization
     void Start()
     {
-    }
-
-    private void OnCollisionStay2D(Collision2D collision)
-    {
-        OnCollision2D(collision);
-    }
-
-    private void OnCollisionEnter2D(Collision2D collision)
-    {
-        OnCollision2D(collision);
-    }
-
-    void OnCollision2D(Collision2D collision)
-    {
-        var footheight = (collider.transform.position.ToVector2() + collider.offset - collider.size / 2).y - collider.edgeRadius;
-        foreach (var contact in collision.contacts)
-        {
-            if (contact.normal.y > 0.5f && Mathf.Abs(contact.point.y - footheight) < 0.1f)
-            {
-                Land();
-            }
-            if (Mathf.Abs(contact.normal.y) > 0.2f)
-                velocity.y = 0;
-            Debug.DrawLine(contact.point, contact.point + contact.normal, Color.red);
-
-        }
     }
 
     void Land()
@@ -174,7 +150,7 @@ public class PlayerController : MonoBehaviour
         else if(rawMovementInput.x > 0)
             renderer.flipX = false;
 
-        if(EnableControl && onGround && Mathf.Abs(rigidbody.velocity.x) > 0.01f)
+        if(EnableControl && onGround && Mathf.Abs(velocity.x) > 0.01f)
         {
             AudioManager.Instance.Walking(true);
         }
@@ -192,14 +168,14 @@ public class PlayerController : MonoBehaviour
     public void SetPositionVelocity(Vector2 pos, Vector2 velocity)
     {
         transform.position = pos.ToVector3(transform.position.z);
-        rigidbody.velocity = velocity;
+        this.velocity = velocity;
     }
 
     public void Jump()
     {
         if (onGroundCache)
         {
-            velocity.y = jumpVelocity;
+            m_Velocity.y = jumpVelocity;
             if(EnableControl)
             {
                 AudioManager.Instance.Jump();
@@ -210,12 +186,8 @@ public class PlayerController : MonoBehaviour
     }
     private void FixedUpdate()
     {
-        if(!EnableControl)
-        {
-            rigidbody.bodyType = RigidbodyType2D.Kinematic;
-
+        if (!EnableControl)
             return;
-        }
 
         if (jumpCache.Value)
             Jump();
@@ -227,67 +199,90 @@ public class PlayerController : MonoBehaviour
             velocity.y
         );
 
-        if(rigidbody.velocity.y < 0)
-            Physics2D.gravity = Vector2.down * gravity * m_FallGravityScale;
-        else
-            Physics2D.gravity = Vector2.down * gravity;
+        var g = Vector2.down * gravity;
+        if (velocity.y < 0)
+            g = Vector2.down * gravity * m_FallGravityScale;
 
+        velocity += g * Time.fixedDeltaTime;
 
-        Vector2 v;
-        v.x = velocity.x;
+        float distance = 0;
+        Vector2 motionStep = Time.fixedDeltaTime * velocity;
 
-        if (velocity.y > 0)
-            v.y = velocity.y;
-        else
-            v.y = rigidbody.velocity.y;
+        if(CollisionCheck(Time.fixedDeltaTime, velocity, Vector2.down, Vector2.left, out distance))
+        {
+            motionStep.y = MathUtility.MinAbs(motionStep.y, velocity.normalized.y * distance);
+            Land();
+        }
+        if(CollisionCheck(Time.fixedDeltaTime, velocity, Vector2.up, Vector2.left, out distance))
+            motionStep.y = MathUtility.MinAbs(motionStep.y, velocity.normalized.y * distance);
+        if(CollisionCheck(Time.fixedDeltaTime, velocity, Vector2.left, Vector2.up, out distance))
+            motionStep.x = MathUtility.MinAbs(motionStep.x, velocity.normalized.x * distance);
+        if(CollisionCheck(Time.fixedDeltaTime, velocity, Vector2.right, Vector2.up, out distance))
+            motionStep.x = MathUtility.MinAbs(motionStep.x, velocity.normalized.x * distance);
 
+        velocity = motionStep / Time.fixedDeltaTime;
 
-        rigidbody.velocity = v;
-
-        velocity.y = 0;
-        
+        transform.position += motionStep.ToVector3();
     }
 
-    (Vector2 penetration, float time) CollisionCheck(float dt, Vector2 velocity, Vector2 normal, Vector2 tangent)
+    Rect CreateRect(Vector2 center, Vector2 size) => new Rect(center - (size / 2), size);
+
+    
+
+
+    bool IsColliderTile(Vector2 pos)
+        => GameMap.Instance.GetTileAt(pos) as Tile is var tile && tile && tile.colliderType != Tile.ColliderType.None;
+
+    List<Rect> neighboorTiles = new List<Rect>();
+    bool CollisionCheck(float dt, Vector2 velocity, Vector2 normal, Vector2 tangent, out float hitDistance)
     {
-        var halfSize = collider.size / 2;
+        var colliderSize = collider.size + Vector2.one * collider.edgeRadius * 2;
+
+        // Trim collider width a little bit to let player fall down when jumping clinging to a wall
+        if (normal.y != 0)
+            colliderSize.x -= 0.001f;
+
+        var halfSize = colliderSize / 2;
         var pointA = collider.transform.position.ToVector2() + collider.offset + halfSize * normal + halfSize * tangent;
         var pointB = collider.transform.position.ToVector2() + collider.offset + halfSize * normal - halfSize * tangent;
 
-        var offsetA = pointA + velocity * dt;
-        var offsetB = pointB + velocity * dt;
+        var center = collider.transform.position.ToVector2() + collider.offset;
+        var offset = velocity * dt;
+        neighboorTiles.Clear();
 
-        var tileA = GameMap.Instance.GetTileAt(offsetA);
-        var tileB = GameMap.Instance.GetTileAt(offsetB);
-
-        float penetration = 0;
-        bool penetrated = false;
-
-        float time = -1;
-
-        if(tileA)
+        if (!IsColliderTile(center + tangent) && IsColliderTile(center + normal + tangent))
         {
-            var offsetDistance = ((offsetA - pointA) * normal).magnitude;
-            var penA = (ClampToDir(offsetA, -normal) - offsetA).magnitude;
-            var timeA = (offsetDistance - penA) / (velocity * normal).magnitude;
-            penetration = penA;
-            time = timeA;
-            penetrated = true;
+            neighboorTiles.Add(new Rect(MathUtility.Floor(center + normal + tangent) - halfSize, Vector2.one + colliderSize));
         }
-        if(tileB)
+        if (!IsColliderTile(center - tangent) && IsColliderTile(center + normal - tangent))
         {
-            var offsetDistance = ((offsetB - pointB) * normal).magnitude;
-            var penB = (ClampToDir(offsetB, -normal) - offsetB).magnitude;
-            var timeB = (offsetDistance - penB) / (velocity * normal).magnitude;
-            if(timeB < time || !penetrated)
+            neighboorTiles.Add(new Rect(MathUtility.Floor(center + normal - tangent) - halfSize, Vector2.one + colliderSize));
+        }
+        if (IsColliderTile(center + normal))
+        {
+            neighboorTiles.Add(new Rect(MathUtility.Floor(center + normal) - halfSize, Vector2.one + colliderSize));
+        }
+
+        var minDistance = float.MaxValue;
+        bool colliderHit = false;
+        foreach(var tile in neighboorTiles)
+        {
+            Utility.DebugDrawRect(tile, new Color(normal.x * .5f + .5f, normal.y * .5f + .5f, 1), Mathf.Atan2(normal.y, normal.x));
+
+            float THRESHOLD = -0.00001f;
+
+            var (hit, distance, norm) = Utility.BoxRaycast(tile, center, velocity.normalized);
+            if(hit && THRESHOLD <= distance && distance <= offset.magnitude && Vector2.Dot(norm, normal) < -0.99f)
             {
-                penetration = penB;
-                time = timeB;
+                Debug.DrawLine(center + velocity.normalized * distance, center + velocity.normalized * distance + norm);
+                minDistance = Mathf.Min(distance, minDistance);
+                colliderHit = true;
             }
         }
 
+        hitDistance = minDistance;
 
-        return (normal * penetration, time);
+        return colliderHit;
     }
 
     Vector2 ClampToDir(Vector2 v, Vector2 normal)

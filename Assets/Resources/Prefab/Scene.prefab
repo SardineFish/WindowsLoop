@@ -308,8 +308,8 @@ MonoBehaviour:
   m_RefResolutionY: 400
   m_UpscaleRT: 0
   m_PixelSnapping: 1
-  m_CropFrameX: 0
-  m_CropFrameY: 0
+  m_CropFrameX: 1
+  m_CropFrameY: 1
   m_StretchFill: 0
 --- !u!1 &5411392726710634803
 GameObject:

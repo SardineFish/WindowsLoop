@@ -232,7 +232,7 @@ public class SnapManager : Singleton<SnapManager>
         Snapper.TickPerFrame();
 
         SelfData.PlayerPosition = GameSystem.Instance.Player.transform.position;
-        SelfData.PlayerVelocity = GameSystem.Instance.Player.rigidbody.velocity;
+        SelfData.PlayerVelocity = GameSystem.Instance.Player.velocity;
         SelfData.ViewRect = CameraManager.Instance.ViewportTileRect;
         SelfData.Flush();
 
@@ -303,10 +303,8 @@ public class SnapManager : Singleton<SnapManager>
             {
                 var player = GameSystem.Instance.Player;
                 player.gameObject.SetActive(true);
-                player.rigidbody.bodyType = RigidbodyType2D.Dynamic;
                 player.EnableControl = true;
-                player.rigidbody.MovePosition(player.transform.position.ToVector2() + Vector2.up * 0.005f);
-                player.velocity = player.rigidbody.velocity;
+                player.transform.position = player.transform.position + Vector3.up * 0.005f;
                 isPreviousActive = true;
             }
 

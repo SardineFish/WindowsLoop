@@ -563,6 +563,83 @@ public static class Utility
         var transform = ProjectionToWorldMatrix(camera);
         return (mesh, transform);
     }
+
+    public static void DebugDrawRect(Rect rect, Color color, float z = 0)
+    {
+        Debug.DrawLine(new Vector3(rect.xMin, rect.yMin, z), new Vector3(rect.xMax, rect.yMin, z), color);
+        Debug.DrawLine(new Vector3(rect.xMin, rect.yMin, z), new Vector3(rect.xMin, rect.yMax, z), color);
+        Debug.DrawLine(new Vector3(rect.xMax, rect.yMax, z), new Vector3(rect.xMin, rect.yMax, z), color);
+        Debug.DrawLine(new Vector3(rect.xMax, rect.yMax, z), new Vector3(rect.xMax, rect.yMin, z), color);
+    }
+
+    public static (bool hit, float distance, Vector2 normal) BoxRaycast(Rect box, Vector2 center, Vector2 direction)
+    {
+        direction = direction.normalized;
+        Vector2 tMin, tMax;
+        if (direction.x == 0 && direction.y == 0)
+            return (false, 0, Vector2.zero);
+        else if (direction.x == 0)
+        {
+            tMin.y = (box.yMin - center.y) / direction.y;
+            tMax.y = (box.yMax - center.y) / direction.y;
+            tMin.x = tMax.x = float.NegativeInfinity;
+            if (box.xMin <= center.x && center.x <= box.xMax)
+            {
+                if (tMin.y < tMax.y)
+                    return (true, tMin.y, Vector2.down);
+                return (true, tMax.y, Vector2.up);
+            }
+            return (false, 0, Vector2.zero);
+        }
+        else if (direction.y == 0)
+        {
+            tMin.x = (box.xMin - center.x) / direction.x;
+            tMax.x = (box.xMax - center.x) / direction.x;
+            tMin.y = tMax.y = float.NegativeInfinity;
+
+            if (box.yMin <= center.y && center.y <= box.yMax)
+            {
+                if (tMin.x < tMax.x)
+                    return (true, tMin.x, Vector2.left);
+                return (true, tMax.x, Vector2.right);
+            }
+            return (false, 0, Vector2.zero);
+        }
+
+        tMin = (box.min - center) / direction; // distance to box min lines (X and Y)
+        tMax = (box.max - center) / direction; // distance to box max lines (X and Y)
+
+        var minXT = tMin.x; // min distance to vertical line
+        var maxXT = tMax.x; // max distance to vertical line
+        var minXNormal = Vector2.left; // normal of the vertical line which has minimal distance to center
+        var minYT = tMin.y;
+        var maxYT = tMax.y;
+        var minYNormal = Vector2.down;
+
+        if (tMin.x > tMax.x)
+        {
+            minXT = tMax.x;
+            maxXT = tMin.x;
+            minXNormal = Vector2.right;
+        }
+        if (tMin.y > tMax.y)
+        {
+            minYT = tMax.y;
+            maxYT = tMin.y;
+            minYNormal = Vector2.up;
+        }
+
+        if (minYT > maxXT || minXT > maxYT)
+        {
+            return (false, 0, Vector2.zero);
+        }
+        else if (minXT > minYT)
+        {
+            return (true, minXT, minXNormal);
+        }
+        return (true, minYT, minYNormal);
+
+    }
 }
 
 

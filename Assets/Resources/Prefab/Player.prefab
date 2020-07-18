@@ -12,7 +12,6 @@ GameObject:
   - component: {fileID: 5587389793529914990}
   - component: {fileID: 5587389793529914992}
   - component: {fileID: 5587389793529914995}
-  - component: {fileID: 5587389793529914994}
   - component: {fileID: 8117165557753103247}
   m_Layer: 0
   m_Name: Player
@@ -105,8 +104,6 @@ MonoBehaviour:
   m_FallGravityScale: 1.8
   m_JumpCacheTime: 0.033
   m_CoyoteTime: 0.1
-  velocity: {x: 0, y: 0}
-  rigidbody: {fileID: 0}
 --- !u!61 &5587389793529914995
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -131,29 +128,8 @@ BoxCollider2D:
     adaptiveTiling: 0
   m_AutoTiling: 0
   serializedVersion: 2
-  m_Size: {x: 0.425, y: 0.8}
-  m_EdgeRadius: 0.1
---- !u!50 &5587389793529914994
-Rigidbody2D:
-  serializedVersion: 4
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 5587389793529914991}
-  m_BodyType: 0
-  m_Simulated: 1
-  m_UseFullKinematicContacts: 0
-  m_UseAutoMass: 0
-  m_Mass: 1
-  m_LinearDrag: 0
-  m_AngularDrag: 0.05
-  m_GravityScale: 1
-  m_Material: {fileID: 0}
-  m_Interpolate: 0
-  m_SleepingMode: 1
-  m_CollisionDetection: 1
-  m_Constraints: 4
+  m_Size: {x: 0.625, y: 1}
+  m_EdgeRadius: 0
 --- !u!81 &8117165557753103247
 AudioListener:
   m_ObjectHideFlags: 0

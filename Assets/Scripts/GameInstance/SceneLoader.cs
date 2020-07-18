@@ -24,7 +24,7 @@ public class SceneLoader : Singleton<SceneLoader>
                 {
                     if(!sceneLoaded)
                     {
-                        UnityEngine.SceneManagement.SceneManager.LoadScene("Level-0-Assist", LoadSceneMode.Single);
+                        UnityEngine.SceneManagement.SceneManager.LoadScene("SampleScene", LoadSceneMode.Single);
                         sceneLoaded = true;
                         PublicData.LevelState = 1;
                         PublicData.Flush();
