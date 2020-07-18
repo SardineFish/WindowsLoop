@@ -27,6 +27,7 @@ namespace WindowSnap
                     .ToList();
             }
         }
+        public static List<int> OtherPIDs => Others.Select(page => page.ReadInt32(Address.PID)).ToList();
         internal static int selfIndex;
         public static int[] PageTable => page0.ReadArray<int>(0, PageCount);
         static MemoryMappedFile mmf =

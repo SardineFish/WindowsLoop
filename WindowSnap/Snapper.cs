@@ -54,12 +54,19 @@ namespace WindowSnap
             {
                 GetWindowRect(hWnd, out var windowRect);
                 GetClientScreenRect(hWnd, out var clientRect);
-                WindowWidth = windowRect.Width;
-                WindowHeight = windowRect.Height;
                 ClientOffsetX = clientRect.Left - windowRect.Left;
                 ClientOffsetY = clientRect.Top - windowRect.Top;
+                WindowWidth = ClientWidth + ClientOffsetX * 2;
+                WindowHeight = ClientHeight + ClientOffsetX + ClientOffsetY;
                 wndProcDelegate = new WndProc(WndProc);
-                originalWndProcPtr = SetWindowLongPtr(hWnd, -4, Marshal.GetFunctionPointerForDelegate(wndProcDelegate));
+                originalWndProcPtr = SetWindowLongPtr(
+                    hWnd,
+                    WindowLongFlags.GWL_WNDPROC,
+                    Marshal.GetFunctionPointerForDelegate(wndProcDelegate));
+                SetWindowLongPtr(
+                    hWnd,
+                    WindowLongFlags.GWL_STYLE,
+                    (IntPtr)(WS.CAPTION | WS.VISIBLE | WS.CLIPSIBLINGS | WS.SYSMENU));
             }
             UpdateScreenSnapRect();
 
@@ -123,7 +130,6 @@ namespace WindowSnap
                 switch (msg)
                 {
                 case WM.ENTERSIZEMOVE:
-                case WM.SIZE:
                     {
                         GetWindowRect(hWnd, out var windowRect);
                         GetCursorPos(out var cursor);
@@ -189,8 +195,6 @@ namespace WindowSnap
 
                         if (msg == WM.EXITSIZEMOVE)
                         {
-                            LogInfo(SharedMemory.PageTable.Aggregate("", (a, b) => $"{a}{b} "));
-
                             DetachAll();
 
                             if (attachedWindowPID > 0)

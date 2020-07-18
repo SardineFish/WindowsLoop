@@ -12,12 +12,12 @@ namespace WindowSnap
         // This helper static method is required because the 32-bit version of user32.dll does not contain this API
         // (on any versions of Windows), so linking the method will fail at run-time. The bridge dispatches the request
         // to the correct function (SetWindowLong in 32-bit mode and SetWindowLongPtr in 64-bit mode)
-        public static IntPtr SetWindowLongPtr(IntPtr hWnd, int nIndex, IntPtr dwNewLong)
+        public static IntPtr SetWindowLongPtr(IntPtr hWnd, WindowLongFlags nIndex, IntPtr dwNewLong)
         {
             if (IntPtr.Size == 8)
-                return SetWindowLongPtr64(hWnd, nIndex, dwNewLong);
+                return SetWindowLongPtr64(hWnd, (int)nIndex, dwNewLong);
             else
-                return new IntPtr(SetWindowLong32(hWnd, nIndex, dwNewLong.ToInt32()));
+                return new IntPtr(SetWindowLong32(hWnd, (int)nIndex, dwNewLong.ToInt32()));
         }
         [DllImport("user32.dll", EntryPoint = "SetWindowLong")]
         private static extern int SetWindowLong32(IntPtr hWnd, int nIndex, int dwNewLong);
@@ -1128,18 +1128,53 @@ namespace WindowSnap
         HSHELL_WINDOWREPLACED = 13
     }
 
-    enum WindowLongFlags : int
+    public enum WindowLongFlags : int
     {
-         GWL_EXSTYLE = -20,
-         GWLP_HINSTANCE = -6,
-         GWLP_HWNDPARENT = -8,
-         GWL_ID = -12,
-         GWL_STYLE = -16,
-         GWL_USERDATA = -21,
-         GWL_WNDPROC = -4,
-         DWLP_USER = 0x8,
-         DWLP_MSGRESULT = 0x0,
-         DWLP_DLGPROC = 0x4
+        GWL_EXSTYLE = -20,
+        GWLP_HINSTANCE = -6,
+        GWLP_HWNDPARENT = -8,
+        GWL_ID = -12,
+        GWL_STYLE = -16,
+        GWL_USERDATA = -21,
+        GWL_WNDPROC = -4,
+        DWLP_USER = 0x8,
+        DWLP_MSGRESULT = 0x0,
+        DWLP_DLGPROC = 0x4
+    }
+
+    [Flags]
+    enum WS : uint
+    {
+        OVERLAPPED = 0x00000000,
+        POPUP = 0x80000000,
+        CHILD = 0x40000000,
+        MINIMIZE = 0x20000000,
+        VISIBLE = 0x10000000,
+        DISABLED = 0x08000000,
+        CLIPSIBLINGS = 0x04000000,
+        CLIPCHILDREN = 0x02000000,
+        MAXIMIZE = 0x01000000,
+        BORDER = 0x00800000,
+        DLGFRAME = 0x00400000,
+        VSCROLL = 0x00200000,
+        HSCROLL = 0x00100000,
+        SYSMENU = 0x00080000,
+        THICKFRAME = 0x00040000,
+        GROUP = 0x00020000,
+        TABSTOP = 0x00010000,
+
+        MINIMIZEBOX = 0x00020000,
+        MAXIMIZEBOX = 0x00010000,
+
+        CAPTION = BORDER | DLGFRAME,
+        TILED = OVERLAPPED,
+        ICONIC = MINIMIZE,
+        SIZEBOX = THICKFRAME,
+        TILEDWINDOW = OVERLAPPEDWINDOW,
+
+        OVERLAPPEDWINDOW = OVERLAPPED | CAPTION | SYSMENU | THICKFRAME | MINIMIZEBOX | MAXIMIZEBOX,
+        POPUPWINDOW = POPUP | BORDER | SYSMENU,
+        CHILDWINDOW = CHILD,
     }
 
     [Flags()]
